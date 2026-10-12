@@ -1,0 +1,2 @@
+# Naba Academy — Migration Directory
+# Schema migrations will be created here via TypeORM CLI commands (migration:create / migration:generate)

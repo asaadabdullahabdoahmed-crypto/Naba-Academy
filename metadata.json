@@ -1,0 +1,6 @@
+{
+  "name": "Naba Academy — أكاديمية نبأ للتعلم الإلكتروني",
+  "description": "منصة أكاديمية نبأ للتعلم الإلكتروني - المنصة التعليمية الأكاديمية المتكاملة للطلاب والمحاضرين والإدارة والخريجين",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
