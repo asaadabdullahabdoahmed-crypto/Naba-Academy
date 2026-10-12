@@ -17,11 +17,23 @@ export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ type: 'varchar', length: 20, unique: true, name: 'national_id' })
+  nationalId!: string;
+
+  @Column({ type: 'varchar', length: 255, name: 'name_ar' })
+  nameAr!: string;
+
+  @Column({ type: 'varchar', length: 255, name: 'name_en' })
+  nameEn!: string;
+
   @Column({ type: 'varchar', length: 320, name: 'email' })
   email!: string;
 
   @Column({ type: 'varchar', length: 320, unique: true, name: 'normalized_email' })
   normalizedEmail!: string;
+
+  @Column({ type: 'varchar', length: 30, nullable: true, name: 'phone' })
+  phone!: string | null;
 
   @Column({ type: 'varchar', length: 255, name: 'password_hash' })
   passwordHash!: string;

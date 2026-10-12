@@ -150,6 +150,9 @@ describe('AuthController', () => {
       const dto = {
         email: 'test@naba.edu.sa',
         password: 'StrongPassword123!',
+        nationalId: '1092837465',
+        fullNameAr: 'عمر بن عبد العزيز',
+        fullNameEn: 'Omar Abdulaziz',
       };
 
       const res = await controller.register(dto);

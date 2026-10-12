@@ -21,6 +21,10 @@ import { assertPasswordPolicy } from '../../infrastructure/security/password-pol
 export interface RegisterUserInput {
   email: string;
   password: string;
+  nationalId: string;
+  fullNameAr: string;
+  fullNameEn: string;
+  phone?: string | null;
 }
 
 export interface RegisterUserResult {
@@ -53,13 +57,20 @@ export class RegistrationService {
     };
 
     const { email: displayEmail, normalizedEmail } = normalizeEmail(input.email);
+    const trimmedNationalId = (input.nationalId || '').trim();
+    const trimmedNameAr = (input.fullNameAr || '').trim();
+    const trimmedNameEn = (input.fullNameEn || '').trim();
+    const trimmedPhone = input.phone ? input.phone.trim() : null;
 
     // 1. Enforce strict password policy
     assertPasswordPolicy(input.password);
 
-    // 2. Check for existing account (anti-enumeration: return generic response without leaking)
+    // 2. Check for existing account by normalizedEmail or nationalId (anti-enumeration: return generic response without leaking)
     const existing = await this.userRepository.findOne({
-      where: { normalizedEmail },
+      where: [
+        { normalizedEmail },
+        { nationalId: trimmedNationalId },
+      ],
     });
 
     if (existing) {
@@ -85,10 +96,14 @@ export class RegistrationService {
           throw new Error('Required canonical role "student" is not seeded in database');
         }
 
-        // Create user
+        // Create user with full identity record matching users schema
         const user = manager.create(UserEntity, {
+          nationalId: trimmedNationalId,
+          nameAr: trimmedNameAr,
+          nameEn: trimmedNameEn,
           email: displayEmail,
           normalizedEmail,
+          phone: trimmedPhone,
           passwordHash,
           accountStatus: 'pending_verification',
           failedLoginCount: 0,
@@ -126,7 +141,7 @@ export class RegistrationService {
         return persistedUser;
       });
     } catch (err: unknown) {
-      // Handle PostgreSQL unique constraint race condition on normalized_email (code 23505)
+      // Handle PostgreSQL unique constraint race condition on normalized_email or national_id (code 23505)
       const isUniqueViolation =
         err &&
         typeof err === 'object' &&
@@ -134,12 +149,7 @@ export class RegistrationService {
         (err as { code: string }).code === '23505';
 
       if (isUniqueViolation) {
-        const doubleCheck = await this.userRepository.findOne({
-          where: { normalizedEmail },
-        });
-        if (doubleCheck) {
-          return genericResponse;
-        }
+        return genericResponse;
       }
       throw err;
     }

@@ -20,6 +20,15 @@ describe('RegistrationService', () => {
   let emailSender: Partial<EmailSender>;
   let entityManager: Partial<EntityManager>;
 
+  const validRegistrationInput = {
+    email: 'NewStudent@Naba.EDU.SA',
+    password: 'StrongStudentPassword2026!',
+    nationalId: '1092837465',
+    fullNameAr: 'عمر بن عبد العزيز الشمري',
+    fullNameEn: 'Omar Abdulaziz Al-Shammari',
+    phone: '0501234567',
+  };
+
   beforeEach(() => {
     userRepository = {
       findOne: jest.fn(),
@@ -71,7 +80,7 @@ describe('RegistrationService', () => {
   it('should reject registration if password fails complexity policy', async () => {
     await expect(
       service.register({
-        email: 'user@example.com',
+        ...validRegistrationInput,
         password: 'short',
       }),
     ).rejects.toThrow(PasswordPolicyViolationException);
@@ -80,34 +89,61 @@ describe('RegistrationService', () => {
   it('should return anti-enumeration generic response without leaking if email is already registered', async () => {
     (userRepository.findOne as jest.Mock).mockResolvedValue({
       id: 'existing-id',
-      email: 'user@example.com',
-      normalizedEmail: 'user@example.com',
+      email: 'newstudent@naba.edu.sa',
+      normalizedEmail: 'newstudent@naba.edu.sa',
+      nationalId: '1092837465',
     });
 
-    const result = await service.register({
-      email: 'user@example.com',
-      password: 'ValidPassword123!',
-    });
+    const result = await service.register(validRegistrationInput);
 
     expect(result).toBeDefined();
     expect(result.status).toBe('verification_required');
     expect(result.message).toContain('If this email address is eligible');
-    // Ensure no duplicate emails or transactions were initiated
     expect(emailSender.sendVerificationEmail).not.toHaveBeenCalled();
     expect(dataSource.transaction).not.toHaveBeenCalled();
   });
 
-  it('should successfully register new user with student role and dispatch verification email', async () => {
+  it('should return anti-enumeration generic response if nationalId is already registered', async () => {
+    (userRepository.findOne as jest.Mock).mockResolvedValue({
+      id: 'existing-different-email-id',
+      email: 'other@naba.edu.sa',
+      normalizedEmail: 'other@naba.edu.sa',
+      nationalId: '1092837465',
+    });
+
+    const result = await service.register(validRegistrationInput);
+
+    expect(result).toBeDefined();
+    expect(result.status).toBe('verification_required');
+    expect(emailSender.sendVerificationEmail).not.toHaveBeenCalled();
+    expect(dataSource.transaction).not.toHaveBeenCalled();
+  });
+
+  it('should successfully register new user with full identity fields and student role', async () => {
     (userRepository.findOne as jest.Mock).mockResolvedValue(null);
 
-    const result = await service.register({
-      email: 'NewStudent@Naba.EDU.SA',
-      password: 'StrongStudentPassword2026!',
-    });
+    const result = await service.register(validRegistrationInput);
 
     expect(result).toBeDefined();
     expect(result.status).toBe('verification_required');
     expect(passwordHasher.hash).toHaveBeenCalledWith('StrongStudentPassword2026!');
+
+    // Verify UserEntity created with correct fields and never plaintext password
+    expect(entityManager.create).toHaveBeenCalledWith(
+      UserEntity,
+      expect.objectContaining({
+        nationalId: '1092837465',
+        nameAr: 'عمر بن عبد العزيز الشمري',
+        nameEn: 'Omar Abdulaziz Al-Shammari',
+        email: 'NewStudent@Naba.EDU.SA',
+        normalizedEmail: 'newstudent@naba.edu.sa',
+        phone: '0501234567',
+        passwordHash: 'argon2id$hashedpassword',
+        accountStatus: 'pending_verification',
+      }),
+    );
+
+    // Verify canonical student role assigned
     expect(entityManager.findOne).toHaveBeenCalledWith(RoleEntity, {
       where: { code: 'student' },
     });
@@ -124,17 +160,40 @@ describe('RegistrationService', () => {
     );
   });
 
-  it('should strictly ignore caller-supplied roleCode and only assign canonical student role', async () => {
+  it('should support registration without optional phone', async () => {
     (userRepository.findOne as jest.Mock).mockResolvedValue(null);
 
-    // Attempting privilege escalation by injecting roleCode
-    const maliciousInput = {
-      email: 'Attacker@Naba.EDU.SA',
-      password: 'StrongAttackerPassword2026!',
-      roleCode: 'system_admin',
+    const inputWithoutPhone = {
+      email: 'Student2@Naba.EDU.SA',
+      password: 'StrongStudentPassword2026!',
+      nationalId: '1092837466',
+      fullNameAr: 'محمد بن سالم',
+      fullNameEn: 'Mohammed Salem',
     };
 
-    const result = await service.register(maliciousInput as any);
+    const result = await service.register(inputWithoutPhone);
+
+    expect(result).toBeDefined();
+    expect(result.status).toBe('verification_required');
+    expect(entityManager.create).toHaveBeenCalledWith(
+      UserEntity,
+      expect.objectContaining({
+        phone: null,
+      }),
+    );
+  });
+
+  it('should strictly ignore caller-supplied roleCode or academic fields (program, GPA)', async () => {
+    (userRepository.findOne as jest.Mock).mockResolvedValue(null);
+
+    const inputWithExtraFields = {
+      ...validRegistrationInput,
+      roleCode: 'system_admin',
+      program: 'BS-CS',
+      highSchoolGpa: '98.5',
+    };
+
+    const result = await service.register(inputWithExtraFields as any);
 
     expect(result).toBeDefined();
     expect(result.status).toBe('verification_required');
@@ -142,43 +201,34 @@ describe('RegistrationService', () => {
     expect(entityManager.findOne).toHaveBeenCalledWith(RoleEntity, {
       where: { code: 'student' },
     });
-    expect(entityManager.findOne).not.toHaveBeenCalledWith(RoleEntity, {
-      where: { code: 'system_admin' },
-    });
+    // Program or GPA must never be set on UserEntity
     expect(entityManager.create).toHaveBeenCalledWith(
-      UserRoleAssignmentEntity,
-      expect.objectContaining({
-        roleId: 'role-uuid-student',
+      UserEntity,
+      expect.not.objectContaining({
+        program: expect.anything(),
+        highSchoolGpa: expect.anything(),
       }),
     );
   });
 
   it('should abort and throw an error if canonical student role is not seeded', async () => {
     (userRepository.findOne as jest.Mock).mockResolvedValue(null);
-    (entityManager.findOne as jest.Mock).mockResolvedValue(null); // Role not found
+    (entityManager.findOne as jest.Mock).mockResolvedValue(null);
 
-    await expect(
-      service.register({
-        email: 'student@naba.edu.sa',
-        password: 'StrongStudentPassword2026!',
-      }),
-    ).rejects.toThrow('Required canonical role "student" is not seeded in database');
+    await expect(service.register(validRegistrationInput)).rejects.toThrow(
+      'Required canonical role "student" is not seeded in database',
+    );
   });
 
   it('should handle concurrent unique constraint race condition gracefully via anti-enumeration', async () => {
-    (userRepository.findOne as jest.Mock)
-      .mockResolvedValueOnce(null) // First check: not found
-      .mockResolvedValueOnce({ id: 'concurrent-user-id' }); // Double-check after 23505 race
+    (userRepository.findOne as jest.Mock).mockResolvedValue(null);
 
     (dataSource.transaction as jest.Mock).mockRejectedValue({
       code: '23505',
-      detail: 'Key (normalized_email)=(student@naba.edu.sa) already exists.',
+      detail: 'Key (national_id)=(1092837465) already exists.',
     });
 
-    const result = await service.register({
-      email: 'student@naba.edu.sa',
-      password: 'StrongStudentPassword2026!',
-    });
+    const result = await service.register(validRegistrationInput);
 
     expect(result).toBeDefined();
     expect(result.status).toBe('verification_required');
