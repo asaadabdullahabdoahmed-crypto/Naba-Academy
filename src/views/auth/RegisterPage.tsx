@@ -81,10 +81,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
 
       setIsSuccess(true);
       setStatusNotice(
-        res.message ||
-          (isAr
-            ? 'تم استلام طلب التسجيل بنجاح. تم إرسال رابط تأكيد الحساب إلى بريدك الإلكتروني.'
-            : 'Registration request received successfully. A verification email has been dispatched.')
+        isAr
+          ? 'تم إنشاء الحساب وهو بانتظار تأكيد البريد الإلكتروني. إرسال رسالة التحقق غير متاح حاليًا حتى يتم تفعيل خدمة البريد.'
+          : 'Your account was created and is awaiting email verification. Verification email delivery is currently unavailable until the email service is configured.'
       );
     } catch (err: unknown) {
       const apiErr = err as ApiError;
@@ -111,7 +110,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
         );
       } else {
         setError(
-          msg || (isAr ? 'فشل إرسال طلب التسجيل. يرجى مراجعة البيانات.' : 'Registration failed. Please check inputs.')
+          msg || (isAr ? 'فشل إنشاء الحساب. يرجى مراجعة البيانات.' : 'Failed to create account. Please check inputs.')
         );
       }
     } finally {
@@ -121,11 +120,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
 
   return (
     <AuthCard
-      title={isAr ? 'تقديم طلب قبول جديد' : 'New Admission Application'}
+      title={isAr ? 'إنشاء حساب جديد' : 'Create a New Account'}
       subtitle={
         isAr
-          ? 'تعبئة استمارة التقديم الإلكترونية للالتحاق بالبرامج الأكاديمية'
-          : 'Submit your digital application to enroll in NABA Academy academic programs'
+          ? 'إنشاء حساب مستخدم جديد للوصول إلى منصة أكاديمية نبا'
+          : 'Create a new user account to access the NABA Academy platform'
       }
       locale={locale}
       footerSlot={
@@ -277,17 +276,17 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
           )}
           <span>
             {isSubmitting
-              ? isAr ? 'جاري إرسال الطلب...' : 'Submitting Application...'
-              : isAr ? 'تقديم طلب القبول' : 'Submit Admission Application'}
+              ? isAr ? 'جاري إنشاء الحساب...' : 'Creating Account...'
+              : isAr ? 'إنشاء الحساب' : 'Create Account'}
           </span>
         </button>
 
         <div className="pt-2 text-center">
           <Link
-            to={`/${locale}/auth/application-status`}
+            to={`/${locale}/auth/verify-email`}
             className="text-xs text-[#174F89] hover:underline font-semibold"
           >
-            {isAr ? 'متابعة حالة طلب سابق' : 'Track an existing application'}
+            {isAr ? 'تأكيد حساب مسجل مسبقاً' : 'Verify an existing account'}
           </Link>
         </div>
       </form>
