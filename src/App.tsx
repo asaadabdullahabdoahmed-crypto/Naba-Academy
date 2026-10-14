@@ -15,6 +15,18 @@ import { ShieldCheck } from 'lucide-react';
 import { ToastProvider } from './components/ui/toast';
 import { ConfirmationDialogProvider } from './components/ui/dialog';
 import { I18nProvider } from './i18n/I18nProvider';
+import { AuthProvider } from './context/AuthContext';
+
+// Direct redirect helper preserving hash and search params for email verification links
+const DirectVerifyRedirect: React.FC = () => {
+  const location = useLocation();
+  return <Navigate to={`/ar/auth/verify-email${location.search}${location.hash}`} replace />;
+};
+
+const DirectResetRedirect: React.FC = () => {
+  const location = useLocation();
+  return <Navigate to={`/ar/auth/reset-password${location.search}${location.hash}`} replace />;
+};
 
 // Public views
 import { HomePage } from './views/public/HomePage';
@@ -184,7 +196,8 @@ export default function App() {
     <BrowserRouter>
       <ToastProvider>
         <ConfirmationDialogProvider>
-          {/* Route Verification Drawer accessible via Alt+R only (no public UI badges) */}
+          <AuthProvider>
+            {/* Route Verification Drawer accessible via Alt+R only (no public UI badges) */}
             <RouteVerificationDrawer
               isOpen={isVerifierOpen}
               onClose={() => setIsVerifierOpen(false)}
@@ -192,8 +205,12 @@ export default function App() {
             />
 
             <Routes>
-        {/* Default route redirect to Arabic */}
-        <Route path="/" element={<Navigate to="/ar" replace />} />
+              {/* Direct email links for verification and password reset */}
+              <Route path="/verify-email" element={<DirectVerifyRedirect />} />
+              <Route path="/reset-password" element={<DirectResetRedirect />} />
+
+              {/* Default route redirect to Arabic */}
+              <Route path="/" element={<Navigate to="/ar" replace />} />
 
         {/* Dynamic Locale Wrapper Route */}
         <Route
@@ -398,8 +415,9 @@ export default function App() {
         {/* Fallback for naked paths without locale prefix (e.g. /student/dashboard -> /ar/student/dashboard) */}
         <Route path="*" element={<Navigate to="/ar/system/404" replace />} />
       </Routes>
-    </ConfirmationDialogProvider>
-  </ToastProvider>
-</BrowserRouter>
+          </AuthProvider>
+        </ConfirmationDialogProvider>
+      </ToastProvider>
+    </BrowserRouter>
   );
 }

@@ -18,6 +18,8 @@ import { Locale } from '../../i18n/dictionaries';
 import { useTranslation } from '../../i18n/useTranslation';
 import { NabaLogo } from '../common/NabaLogo';
 
+import { useAuth } from '../../context/AuthContext';
+
 interface TopbarProps {
   locale: Locale;
   onToggleMobileSidebar?: () => void;
@@ -33,12 +35,18 @@ export const Topbar: React.FC<TopbarProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { t, d, isAr } = useTranslation();
+  const { user, isAuthenticated, logout } = useAuth();
   const [isPortalDropdownOpen, setIsPortalDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsUserDropdownOpen(false);
+    try {
+      await logout();
+    } catch {
+      // Continue navigation even if network error
+    }
     navigate(`/${locale}/auth/login`);
   };
 
@@ -192,11 +200,11 @@ export const Topbar: React.FC<TopbarProps> = ({
                 />
                 <div className="absolute top-full mt-1.5 end-0 z-30 w-56 bg-white rounded-xl border border-[#DCE3EB] shadow-xl py-2">
                   <div className="px-4 py-2 border-b border-[#DCE3EB]">
-                    <p className="text-xs font-bold text-[#102033]">
-                      {t(currentPortalObj.titleKey)}
+                    <p className="text-xs font-bold text-[#102033] truncate">
+                      {user ? (user.nameAr || user.nameEn || user.email) : t(currentPortalObj.titleKey)}
                     </p>
-                    <p className="text-[11px] text-[#607086] mt-0.5">
-                      {isAr ? 'جلسة مستخدم نشطة' : 'Active user session'}
+                    <p className="text-[11px] text-[#607086] mt-0.5 truncate">
+                      {user ? user.email : (isAr ? 'جلسة مستخدم نشطة' : 'Active user session')}
                     </p>
                   </div>
 

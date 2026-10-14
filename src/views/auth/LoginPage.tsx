@@ -27,6 +27,9 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { NabaLogo } from '../../components/common/NabaLogo';
 import { ASSET_IMAGES } from '../../assets/branding/images';
 
+import { useAuth } from '../../context/AuthContext';
+import { ApiError } from '../../services/apiClient';
+
 interface LoginPageProps {
   locale: Locale;
 }
@@ -34,6 +37,7 @@ interface LoginPageProps {
 export const LoginPage: React.FC<LoginPageProps> = ({ locale }) => {
   const navigate = useNavigate();
   const { isAr } = useTranslation();
+  const { login } = useAuth();
   const ArrowIcon = isAr ? ArrowLeft : ArrowRight;
 
   const [role, setRole] = useState<PortalArea>('student');
@@ -49,14 +53,72 @@ export const LoginPage: React.FC<LoginPageProps> = ({ locale }) => {
     navigate(`/${nextLocale}/auth/login`);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(false);
-    setError(
-      isAr
-        ? 'خدمة تسجيل الدخول والمصادقة المركزية بانتظار اكتمال ربط خادم الواجهة الخلفية وقاعدة البيانات (NestJS Auth API / PostgreSQL).'
-        : 'Central academic authentication and login is pending connection to the backend auth service and database (NestJS Auth API / PostgreSQL).'
-    );
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const user = await login({ email: identifier, password });
+      
+      // Route user to appropriate portal based on authenticated primaryRole or selected role
+      const primaryRole = user.primaryRole || role;
+      let targetPath = `/${locale}/student/dashboard`;
+      if (primaryRole === 'instructor') {
+        targetPath = `/${locale}/instructor/dashboard`;
+      } else if (primaryRole === 'department_head' || primaryRole === 'department') {
+        targetPath = `/${locale}/department/dashboard`;
+      } else if (primaryRole === 'system_admin' || primaryRole === 'admin') {
+        targetPath = `/${locale}/admin/dashboard`;
+      } else if (primaryRole === 'alumni') {
+        targetPath = `/${locale}/alumni/dashboard`;
+      }
+
+      navigate(targetPath);
+    } catch (err: unknown) {
+      setIsSubmitting(false);
+      const apiErr = err as ApiError;
+      const code = apiErr.code;
+      const msg = apiErr.message || '';
+
+      if (code === 'INVALID_CREDENTIALS') {
+        if (msg.toLowerCase().includes('verif')) {
+          setError(
+            isAr
+              ? 'لم يتم تأكيد عنوان البريد الإلكتروني بعد. يرجى تفعيل حسابك من خلال رابط التحقق.'
+              : 'Email address has not been verified yet. Please check your inbox to verify your account.'
+          );
+        } else {
+          setError(
+            isAr
+              ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'
+              : 'Invalid email address or password.'
+          );
+        }
+      } else if (code === 'ACCOUNT_LOCKED') {
+        setError(
+          isAr
+            ? 'تم قفل الحساب مؤقتاً لمدة 15 دقيقة بسبب تكرار المحاولات الخاطئة.'
+            : 'Account is temporarily locked for 15 minutes due to multiple failed attempts.'
+        );
+      } else if (code === 'ACCOUNT_DISABLED') {
+        setError(
+          isAr
+            ? 'تم تعطيل هذا الحساب. يرجى التواصل مع إدارة القبول والتسجيل.'
+            : 'This account is disabled. Please contact academic support.'
+        );
+      } else if (code === 'TOO_MANY_REQUESTS') {
+        setError(
+          isAr
+            ? 'تم تجاوز الحد المسموح من المحاولات. يرجى الانتظار والمحاولة لاحقاً.'
+            : 'Too many requests. Please wait a moment and try again.'
+        );
+      } else {
+        setError(
+          msg || (isAr ? 'فشل تسجيل الدخول. يرجى التحقق من اتصالك بالشبكة.' : 'Login failed. Please check network connection.')
+        );
+      }
+    }
   };
 
   return (

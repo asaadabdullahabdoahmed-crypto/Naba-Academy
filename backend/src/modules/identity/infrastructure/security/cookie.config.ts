@@ -15,7 +15,7 @@ export function getSessionCookieOptions(isProduction: boolean): CookieOptions {
   return {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/',
     maxAge: AUTH_COOKIE_MAX_AGE_MS,
   };
@@ -30,7 +30,7 @@ export function getCsrfCookieOptions(isProduction: boolean): CookieOptions {
   return {
     httpOnly: false,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/',
     maxAge: AUTH_COOKIE_MAX_AGE_MS,
   };
@@ -43,7 +43,7 @@ export function getSessionClearCookieOptions(isProduction: boolean): CookieOptio
   return {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/',
   };
 }
@@ -55,7 +55,7 @@ export function getCsrfClearCookieOptions(isProduction: boolean): CookieOptions 
   return {
     httpOnly: false,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/',
   };
 }

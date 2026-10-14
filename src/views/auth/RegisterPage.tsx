@@ -5,6 +5,9 @@ import { AuthCard } from '../../components/scaffold/AuthCard';
 import { Locale } from '../../i18n/dictionaries';
 import { useTranslation } from '../../i18n/useTranslation';
 
+import { useAuth } from '../../context/AuthContext';
+import { ApiError } from '../../services/apiClient';
+
 interface RegisterPageProps {
   locale: Locale;
 }
@@ -22,6 +25,7 @@ export interface RegistrationFormData {
 
 export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
   const { isAr } = useTranslation();
+  const { register } = useAuth();
 
   const [formData, setFormData] = useState<RegistrationFormData>({
     fullNameAr: '',
@@ -35,15 +39,84 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
   });
 
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Honest notification without simulating fake applicant record creation
-    setStatusNotice(
-      isAr
-        ? 'تم حفظ مدخلات طلب القبول في نموذج التسجيل محليًا. خدمة إنشاء وحفظ طلبات القبول الرسمية بانتظار اكتمال ربط خادم القبول وقاعدة البيانات (NestJS / PostgreSQL).'
-        : 'Admission application inputs captured locally. Formal application submission is pending connection with the backend admissions service and database.'
-    );
+    setError(null);
+    setStatusNotice(null);
+
+    // Client-side password policy check (12-128 chars per security architecture)
+    if (formData.password.length < 12) {
+      setError(
+        isAr
+          ? 'يجب أن تتكون كلمة المرور من 12 خانة على الأقل وتحتوي على أحرف وأرقام ورموز.'
+          : 'Password must be at least 12 characters and contain letters, numbers, and symbols.'
+      );
+      return;
+    }
+
+    if (formData.nationalId.trim().length < 10) {
+      setError(
+        isAr
+          ? 'رقم الهوية الوطنية / الإقامة يجب أن يتكون من 10 أرقام على الأقل.'
+          : 'National ID / Iqama must be at least 10 characters.'
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await register({
+        email: formData.email,
+        password: formData.password,
+        nationalId: formData.nationalId,
+        fullNameAr: formData.fullNameAr,
+        fullNameEn: formData.fullNameEn,
+        phone: formData.phone || undefined,
+      });
+
+      setIsSuccess(true);
+      setStatusNotice(
+        res.message ||
+          (isAr
+            ? 'تم استلام طلب التسجيل بنجاح. تم إرسال رابط تأكيد الحساب إلى بريدك الإلكتروني.'
+            : 'Registration request received successfully. A verification email has been dispatched.')
+      );
+    } catch (err: unknown) {
+      const apiErr = err as ApiError;
+      const code = apiErr.code;
+      const msg = apiErr.message || '';
+
+      if (code === 'EMAIL_ALREADY_REGISTERED' || msg.toLowerCase().includes('already exists')) {
+        setError(
+          isAr
+            ? 'يوجد حساب مسجل مسبقاً بهذا البريد الإلكتروني.'
+            : 'An account with this email address already exists.'
+        );
+      } else if (code === 'PASSWORD_POLICY_VIOLATION') {
+        setError(
+          isAr
+            ? 'كلمة المرور لا تستوفي معايير الأمان (12 خانة على الأقل مع أحرف وأرقام ورموز).'
+            : 'Password does not meet security requirements (min 12 characters with mixed complexity).'
+        );
+      } else if (code === 'TOO_MANY_REQUESTS') {
+        setError(
+          isAr
+            ? 'تم تجاوز الحد المسموح من المحاولات. يرجى الانتظار والمحاولة لاحقاً.'
+            : 'Too many registration requests. Please wait and try again later.'
+        );
+      } else {
+        setError(
+          msg || (isAr ? 'فشل إرسال طلب التسجيل. يرجى مراجعة البيانات.' : 'Registration failed. Please check inputs.')
+        );
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -66,12 +139,42 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
         </div>
       }
     >
-      {statusNotice && (
-        <div className="mb-6 p-4 rounded-xl bg-[#082B50]/5 border border-[#082B50]/20 flex items-start gap-3">
-          <Info size={18} className="text-[#082B50] shrink-0 mt-0.5" />
-          <p className="text-xs text-[#082B50] leading-relaxed font-medium">
-            {statusNotice}
+      {error && (
+        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3">
+          <AlertCircle size={18} className="text-[#C93C3C] shrink-0 mt-0.5" />
+          <p className="text-xs text-[#C93C3C] leading-relaxed font-medium">
+            {error}
           </p>
+        </div>
+      )}
+
+      {statusNotice && (
+        <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${
+          isSuccess
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            : 'bg-[#082B50]/5 border-[#082B50]/20 text-[#082B50]'
+        }`}>
+          <Info size={18} className="shrink-0 mt-0.5" />
+          <div className="text-xs leading-relaxed font-medium space-y-2">
+            <p>{statusNotice}</p>
+            {isSuccess && (
+              <div className="pt-2 flex gap-3">
+                <Link
+                  to={`/${locale}/auth/verify-email?email=${encodeURIComponent(formData.email)}`}
+                  className="inline-flex items-center gap-1 font-bold text-emerald-900 underline"
+                >
+                  {isAr ? 'صفحة تأكيد البريد الإلكتروني' : 'Verify Email Page'}
+                </Link>
+                <span>•</span>
+                <Link
+                  to={`/${locale}/auth/login`}
+                  className="inline-flex items-center gap-1 font-bold text-emerald-900 underline"
+                >
+                  {isAr ? 'تسجيل الدخول' : 'Sign In'}
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -164,10 +267,19 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
 
         <button
           type="submit"
-          className="w-full mt-2 py-2.5 bg-[#082B50] hover:bg-[#061E38] text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2"
+          disabled={isSubmitting}
+          className="w-full mt-2 py-2.5 bg-[#082B50] hover:bg-[#061E38] text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
         >
-          <UserPlus size={15} />
-          <span>{isAr ? 'تقديم طلب القبول' : 'Submit Admission Application'}</span>
+          {isSubmitting ? (
+            <Loader2 size={15} className="animate-spin text-[#D6A53A]" />
+          ) : (
+            <UserPlus size={15} />
+          )}
+          <span>
+            {isSubmitting
+              ? isAr ? 'جاري إرسال الطلب...' : 'Submitting Application...'
+              : isAr ? 'تقديم طلب القبول' : 'Submit Admission Application'}
+          </span>
         </button>
 
         <div className="pt-2 text-center">

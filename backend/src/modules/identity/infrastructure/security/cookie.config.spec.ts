@@ -19,7 +19,7 @@ describe('Cookie Configuration & Transport Utilities', () => {
       expect(opts).toEqual({
         httpOnly: true,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         path: '/',
         maxAge: AUTH_COOKIE_MAX_AGE_MS,
       });
@@ -39,7 +39,7 @@ describe('Cookie Configuration & Transport Utilities', () => {
       expect(optsProd).toEqual({
         httpOnly: false,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         path: '/',
         maxAge: AUTH_COOKIE_MAX_AGE_MS,
       });
@@ -54,7 +54,7 @@ describe('Cookie Configuration & Transport Utilities', () => {
       expect(sessionClear).toEqual({
         httpOnly: true,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         path: '/',
       });
 
@@ -62,7 +62,7 @@ describe('Cookie Configuration & Transport Utilities', () => {
       expect(csrfClear).toEqual({
         httpOnly: false,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         path: '/',
       });
     });

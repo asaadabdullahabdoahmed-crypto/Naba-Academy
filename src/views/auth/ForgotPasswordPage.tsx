@@ -5,6 +5,10 @@ import { AuthCard } from '../../components/scaffold/AuthCard';
 import { Locale } from '../../i18n/dictionaries';
 import { useTranslation } from '../../i18n/useTranslation';
 
+import { Loader2 } from 'lucide-react';
+import { authService } from '../../services/authService';
+import { ApiError } from '../../services/apiClient';
+
 interface ForgotPasswordPageProps {
   locale: Locale;
 }
@@ -14,14 +18,38 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ locale }
   const [email, setEmail] = useState('');
   const [nationalId, setNationalId] = useState('');
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatusNotice(
-      isAr
-        ? 'تم استلام طلب استعادة كلمة المرور محليًا. تتطلب خدمة إرسال روابط الاستعادة ربط خادم المصادقة والبريد (SMTP / NestJS Auth).'
-        : 'Password recovery request received locally. Dispatch of reset tokens requires the backend authentication and mail service.'
-    );
+    setError(null);
+    setStatusNotice(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await authService.forgotPassword({
+        email: email.trim(),
+        locale: locale === 'en' ? 'en' : 'ar',
+      });
+
+      setIsSuccess(true);
+      setStatusNotice(
+        res.message ||
+          (isAr
+            ? 'إذا كان هذا البريد مسجلاً في النظام، فقد تم إرسال رابط إعادة تعيين كلمة المرور إليه.'
+            : 'If this email address is registered, a password reset link has been dispatched.')
+      );
+    } catch (err: unknown) {
+      const apiErr = err as ApiError;
+      setError(
+        apiErr.message ||
+          (isAr ? 'تعذر إرسال رابط الاستعادة حالياً. يرجى المحاولة لاحقاً.' : 'Unable to dispatch reset link. Please try again.')
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -41,10 +69,23 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ locale }
         </div>
       }
     >
+      {error && (
+        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3">
+          <AlertCircle size={18} className="text-[#C93C3C] shrink-0 mt-0.5" />
+          <p className="text-xs text-[#C93C3C] leading-relaxed font-medium">
+            {error}
+          </p>
+        </div>
+      )}
+
       {statusNotice && (
-        <div className="mb-6 p-4 rounded-xl bg-[#082B50]/5 border border-[#082B50]/20 flex items-start gap-3">
-          <Info size={18} className="text-[#082B50] shrink-0 mt-0.5" />
-          <p className="text-xs text-[#082B50] leading-relaxed font-medium">
+        <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${
+          isSuccess
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            : 'bg-[#082B50]/5 border-[#082B50]/20 text-[#082B50]'
+        }`}>
+          <Info size={18} className="shrink-0 mt-0.5" />
+          <p className="text-xs leading-relaxed font-medium">
             {statusNotice}
           </p>
         </div>
@@ -83,10 +124,19 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ locale }
 
         <button
           type="submit"
-          className="w-full mt-2 py-2.5 bg-[#082B50] hover:bg-[#061E38] text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2"
+          disabled={isSubmitting}
+          className="w-full mt-2 py-2.5 bg-[#082B50] hover:bg-[#061E38] text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
         >
-          <KeyRound size={15} />
-          <span>{isAr ? 'إرسال رابط الاستعادة' : 'Send Reset Link'}</span>
+          {isSubmitting ? (
+            <Loader2 size={15} className="animate-spin text-[#D6A53A]" />
+          ) : (
+            <KeyRound size={15} />
+          )}
+          <span>
+            {isSubmitting
+              ? isAr ? 'جاري الإرسال...' : 'Sending...'
+              : isAr ? 'إرسال رابط الاستعادة' : 'Send Reset Link'}
+          </span>
         </button>
       </form>
     </AuthCard>
