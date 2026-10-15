@@ -102,9 +102,9 @@ export class AuthenticationService {
 
     // 4. Verify password against stored Argon2id hash
     const isPasswordValid = await this.passwordHasher.verify(
-      rawPassword,
-      user.passwordHash,
-    );
+  user.passwordHash,
+  rawPassword,
+);
 
     if (!isPasswordValid) {
       // Increment failed login count
