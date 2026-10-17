@@ -6,23 +6,46 @@ import {
   SendEmailOptions,
 } from '../../application/ports/email-sender.port';
 
+/**
+ * Production-grade email delivery service with layered provider priority:
+ * 1. Resend API (Primary when RESEND_API_KEY is configured)
+ * 2. Nodemailer SMTP (Fallback when SMTP credentials are configured)
+ * 3. Simulated delivery (Development and Test environments only)
+ *
+ * In production, silent simulation is strictly prohibited and throws an explicit error.
+ */
 @Injectable()
 export class NodemailerEmailSenderService implements EmailSender {
   private readonly logger = new Logger(NodemailerEmailSenderService.name);
   private transporter: nodemailer.Transporter | null = null;
-  private readonly fromAddress: string;
+  private readonly resendApiKey: string | null = null;
+  private readonly resendFrom: string;
+  private readonly smtpFromAddress: string;
   private readonly appUrl: string;
+  private readonly isProduction: boolean;
 
   constructor(private readonly configService: ConfigService) {
-    this.fromAddress =
+    const nodeEnv =
+      this.configService.get<string>('NODE_ENV') || process.env.NODE_ENV || 'development';
+    this.isProduction = nodeEnv === 'production';
+
+    // 1. Resend API Configuration
+    const apiKey = this.configService.get<string>('RESEND_API_KEY')?.trim();
+    this.resendApiKey = apiKey && apiKey.length > 0 ? apiKey : null;
+
+    // RESEND_FROM: onboarding@resend.dev is Resend's default sandbox domain for testing only.
+    // Production requires a custom verified sending domain configured via RESEND_FROM.
+    this.resendFrom =
+      this.configService.get<string>('RESEND_FROM') ||
+      'Naba Academy <onboarding@resend.dev>';
+
+    // 2. SMTP Configuration (Fallback)
+    this.smtpFromAddress =
       this.configService.get<string>('MAIL_FROM') ||
       'Naba Academy <no-reply@naba.edu.sa>';
-    this.appUrl =
-      this.configService.get<string>('APP_URL') ||
-      'https://naba.edu.sa';
 
     const host = this.configService.get<string>('SMTP_HOST');
-    const port = this.configService.get<number>('SMTP_PORT', 587);
+    const port = Number(this.configService.get<number>('SMTP_PORT', 587));
     const user = this.configService.get<string>('SMTP_USER');
     const pass = this.configService.get<string>('SMTP_PASS');
 
@@ -34,37 +57,181 @@ export class NodemailerEmailSenderService implements EmailSender {
         auth: { user, pass },
       });
       this.logger.log(`Nodemailer initialized with SMTP host: ${host}:${port}`);
-    } else {
-      this.logger.warn(
-        'SMTP credentials not fully configured. Email sending will run in simulation mode (logged to console).',
-      );
     }
-  }
 
-  async sendEmail(options: SendEmailOptions): Promise<void> {
-    if (!this.transporter) {
+    // 3. Application Base URL for outbound email action links
+    const baseUrl =
+      this.configService.get<string>('APP_URL') ||
+      this.configService.get<string>('FRONTEND_BASE_URL') ||
+      'https://naba-academy-frontend.onrender.com';
+    this.appUrl = baseUrl.replace(/\/+$/, '');
+
+    // Provider initialization logging and environment safety checks
+    if (this.resendApiKey) {
       this.logger.log(
-        `[SIMULATED EMAIL] To: ${options.to} | Subject: ${options.subject}`,
+        `Email delivery: Primary provider configured with Resend API (Sender: ${this.resendFrom})`,
       );
-      return;
-    }
-
-    try {
-      await this.transporter.sendMail({
-        from: this.fromAddress,
-        to: options.to,
-        subject: options.subject,
-        text: options.text,
-        html: options.html,
-      });
-    } catch (err: unknown) {
-      this.logger.error(
-        `Failed to send email to ${options.to}: ${(err as Error).message}`,
-      );
-      // In production, mail queue retry handles transient SMTP errors
+      if (this.resendFrom.includes('onboarding@resend.dev')) {
+        this.logger.warn(
+          'Using onboarding@resend.dev as Resend sender. Note: onboarding@resend.dev is strictly for testing/sandbox use and requires a verified domain for production delivery.',
+        );
+      }
+    } else if (this.transporter) {
+      this.logger.log('Email delivery: Configured with SMTP fallback provider.');
+    } else {
+      if (this.isProduction) {
+        this.logger.error(
+          'CRITICAL: Neither RESEND_API_KEY nor SMTP credentials configured in production environment. Outbound email delivery will fail.',
+        );
+      } else {
+        this.logger.warn(
+          'Neither RESEND_API_KEY nor SMTP credentials configured. Email sending will run in simulation mode (logged to console).',
+        );
+      }
     }
   }
 
+  /**
+   * Dispatches email using provider priority:
+   * 1. Resend API (Primary)
+   * 2. Nodemailer SMTP (Fallback)
+   * 3. Console simulation (Development/Test only)
+   *
+   * In production, throws error if neither provider is configured or if delivery fails.
+   */
+  async sendEmail(options: SendEmailOptions): Promise<void> {
+    // 1. Primary: Resend REST API
+    if (this.resendApiKey) {
+      try {
+        await this.sendViaResend(options);
+        return;
+      } catch (resendError: unknown) {
+        this.logger.error(
+          `Resend API delivery failed for ${options.to}: ${(resendError as Error).message}`,
+        );
+
+        // Attempt SMTP fallback if configured
+        if (this.transporter) {
+          this.logger.warn(
+            `Attempting SMTP fallback delivery to ${options.to} following Resend failure...`,
+          );
+          try {
+            await this.sendViaSmtp(options);
+            return;
+          } catch (smtpError: unknown) {
+            this.logger.error(
+              `SMTP fallback also failed for ${options.to}: ${(smtpError as Error).message}`,
+            );
+          }
+        }
+
+        // Re-throw in production so failures are not silently hidden
+        if (this.isProduction) {
+          throw resendError;
+        }
+        return;
+      }
+    }
+
+    // 2. Secondary: Nodemailer SMTP
+    if (this.transporter) {
+      try {
+        await this.sendViaSmtp(options);
+        return;
+      } catch (smtpError: unknown) {
+        this.logger.error(
+          `SMTP delivery failed for ${options.to}: ${(smtpError as Error).message}`,
+        );
+        if (this.isProduction) {
+          throw smtpError;
+        }
+        return;
+      }
+    }
+
+    // 3. Fallback: Development simulation only
+    if (this.isProduction) {
+      const errorMsg = `Email delivery failed for ${options.to}: No email provider configured in production (RESEND_API_KEY or SMTP required).`;
+      this.logger.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    this.logger.log(
+      `[SIMULATED EMAIL] To: ${options.to} | Subject: ${options.subject}`,
+    );
+  }
+
+  /**
+   * Internal helper to dispatch email via Resend REST API.
+   * Uses native global fetch available in Node.js 22+.
+   * Sanitizes all logs to ensure RESEND_API_KEY is never leaked.
+   */
+  private async sendViaResend(options: SendEmailOptions): Promise<void> {
+    const payload: {
+      from: string;
+      to: string[];
+      subject: string;
+      html: string;
+      text?: string;
+    } = {
+      from: this.resendFrom,
+      to: [options.to],
+      subject: options.subject,
+      html: options.html,
+    };
+
+    if (options.text) {
+      payload.text = options.text;
+    }
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let errorDetail = '';
+      try {
+        const errorJson = (await response.json()) as { message?: string; name?: string };
+        errorDetail = errorJson?.message || JSON.stringify(errorJson);
+      } catch {
+        errorDetail = await response.text().catch(() => '');
+      }
+
+      throw new Error(
+        `Resend API request failed with HTTP ${response.status}: ${errorDetail}`,
+      );
+    }
+
+    this.logger.log(`Email successfully dispatched via Resend API to ${options.to}`);
+  }
+
+  /**
+   * Internal helper to dispatch email via Nodemailer SMTP.
+   */
+  private async sendViaSmtp(options: SendEmailOptions): Promise<void> {
+    if (!this.transporter) {
+      throw new Error('SMTP transporter is not configured');
+    }
+
+    await this.transporter.sendMail({
+      from: this.smtpFromAddress,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+    });
+
+    this.logger.log(`Email successfully dispatched via SMTP to ${options.to}`);
+  }
+
+  /**
+   * Dispatches academic account email verification link with URL fragment token handoff.
+   */
   async sendVerificationEmail(to: string, rawToken: string): Promise<void> {
     const verificationUrl = `${this.appUrl}/verify-email#token=${encodeURIComponent(
       rawToken,
@@ -134,15 +301,11 @@ export class NodemailerEmailSenderService implements EmailSender {
     rawToken: string,
     locale: string = 'ar',
   ): Promise<void> {
-    const baseUrl = (
-      this.configService.get<string>('FRONTEND_BASE_URL') ||
-      this.configService.get<string>('APP_URL') ||
-      'https://naba.edu.sa'
-    ).replace(/\/+$/, '');
-
     const isEnglish = locale === 'en';
     const lang = isEnglish ? 'en' : 'ar';
-    const resetUrl = `${baseUrl}/${lang}/auth/reset-password#token=${encodeURIComponent(rawToken)}`;
+    const resetUrl = `${this.appUrl}/${lang}/auth/reset-password#token=${encodeURIComponent(
+      rawToken,
+    )}`;
 
     const subject = isEnglish
       ? 'Reset Your Password — Naba Academy | إعادة تعيين كلمة المرور'
@@ -187,7 +350,9 @@ export class NodemailerEmailSenderService implements EmailSender {
     <tr>
       <td style="background-color: #0f172a; padding: 24px; text-align: center;">
         <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 700;">${headerTitle}</h1>
-        <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">${isEnglish ? 'أكاديمية نبأ للتعلم الإلكتروني' : 'Naba Academy for E-Learning'}</p>
+        <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">${
+          isEnglish ? 'أكاديمية نبأ للتعلم الإلكتروني' : 'Naba Academy for E-Learning'
+        }</p>
       </td>
     </tr>
     <tr>

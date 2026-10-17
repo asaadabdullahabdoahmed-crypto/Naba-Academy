@@ -127,6 +127,44 @@ export class EnvironmentVariables {
   @IsString({ message: 'OBJECT_STORAGE_PUBLIC_BASE_URL must be a string' })
   @IsOptional()
   OBJECT_STORAGE_PUBLIC_BASE_URL?: string;
+
+  @IsString({ message: 'RESEND_API_KEY must be a string' })
+  @IsOptional()
+  RESEND_API_KEY?: string;
+
+  @IsString({ message: 'RESEND_FROM must be a string' })
+  @IsOptional()
+  RESEND_FROM?: string;
+
+  @IsString({ message: 'SMTP_HOST must be a string' })
+  @IsOptional()
+  SMTP_HOST?: string;
+
+  @IsInt({ message: 'SMTP_PORT must be an integer between 1 and 65535' })
+  @Min(1, { message: 'SMTP_PORT must be at least 1' })
+  @Max(65535, { message: 'SMTP_PORT cannot exceed 65535' })
+  @IsOptional()
+  SMTP_PORT?: number = 587;
+
+  @IsString({ message: 'SMTP_USER must be a string' })
+  @IsOptional()
+  SMTP_USER?: string;
+
+  @IsString({ message: 'SMTP_PASS must be a string' })
+  @IsOptional()
+  SMTP_PASS?: string;
+
+  @IsString({ message: 'MAIL_FROM must be a string' })
+  @IsOptional()
+  MAIL_FROM?: string;
+
+  @IsString({ message: 'APP_URL must be a string' })
+  @IsOptional()
+  APP_URL?: string;
+
+  @IsString({ message: 'FRONTEND_BASE_URL must be a string' })
+  @IsOptional()
+  FRONTEND_BASE_URL?: string;
 }
 
 /**

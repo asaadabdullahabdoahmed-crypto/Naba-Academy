@@ -83,7 +83,7 @@ describe('Cookie Configuration & Transport Utilities', () => {
         expect.objectContaining({
           httpOnly: true,
           secure: true,
-          sameSite: 'lax',
+          sameSite: 'none',
           path: '/',
         }),
       );
@@ -93,7 +93,7 @@ describe('Cookie Configuration & Transport Utilities', () => {
         expect.objectContaining({
           httpOnly: false,
           secure: true,
-          sameSite: 'lax',
+          sameSite: 'none',
           path: '/',
         }),
       );
@@ -114,7 +114,7 @@ describe('Cookie Configuration & Transport Utilities', () => {
         expect.objectContaining({
           httpOnly: true,
           secure: true,
-          sameSite: 'lax',
+          sameSite: 'none',
           path: '/',
         }),
       );
@@ -123,7 +123,7 @@ describe('Cookie Configuration & Transport Utilities', () => {
         expect.objectContaining({
           httpOnly: false,
           secure: true,
-          sameSite: 'lax',
+          sameSite: 'none',
           path: '/',
         }),
       );
