@@ -82,8 +82,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
       setIsSuccess(true);
       setStatusNotice(
         isAr
-          ? 'تم إنشاء الحساب وهو بانتظار تأكيد البريد الإلكتروني. إرسال رسالة التحقق غير متاح حاليًا حتى يتم تفعيل خدمة البريد.'
-          : 'Your account was created and is awaiting email verification. Verification email delivery is currently unavailable until the email service is configured.'
+          ? 'تم استلام طلب إنشاء الحساب. إذا كان البريد الإلكتروني مؤهلاً فستصلك رسالة لتأكيد البريد. تحقق من صندوق الوارد والرسائل غير المرغوب فيها، ويمكنك استخدام صفحة تأكيد البريد لإعادة الإرسال.'
+          : 'Your registration request has been received. If the email address is eligible, a verification email will be sent. Check your inbox and spam folder, or use the verification page to request another email.'
       );
     } catch (err: unknown) {
       const apiErr = err as ApiError;

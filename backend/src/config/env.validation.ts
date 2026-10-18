@@ -230,6 +230,19 @@ export function validateEnvironment(config: Record<string, unknown>): Environmen
     );
   }
 
+  // In production, if RESEND_API_KEY is configured, RESEND_FROM must be explicitly configured.
+  // Note: For temporary testing/sandbox, RESEND_FROM may be explicitly set to 'Naba Academy <onboarding@resend.dev>',
+  // but it must never be silently generated as an implicit default in production.
+  if (
+    validatedConfig.NODE_ENV === Environment.Production &&
+    validatedConfig.RESEND_API_KEY &&
+    (!validatedConfig.RESEND_FROM || validatedConfig.RESEND_FROM.trim().length === 0)
+  ) {
+    throw new Error(
+      `[ConfigValidationError] Backend environment configuration validation failed:\n  - RESEND_FROM: RESEND_FROM must be explicitly configured when RESEND_API_KEY is configured in production environment`,
+    );
+  }
+
   // Validate CORS origins rules for the validated environment
   parseCorsOrigins(validatedConfig.CORS_ORIGINS, validatedConfig.NODE_ENV);
 

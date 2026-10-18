@@ -104,7 +104,11 @@ export default (): Configuration => {
     },
     email: {
       resendApiKey: process.env.RESEND_API_KEY,
-      resendFrom: process.env.RESEND_FROM || 'Naba Academy <onboarding@resend.dev>',
+      resendFrom:
+        process.env.RESEND_FROM ||
+        (nodeEnv === Environment.Production
+          ? ''
+          : 'Naba Academy <onboarding@resend.dev>'),
       smtpHost: process.env.SMTP_HOST,
       smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
       smtpUser: process.env.SMTP_USER,

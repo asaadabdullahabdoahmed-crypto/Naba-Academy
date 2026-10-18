@@ -46,17 +46,17 @@ export const IDENTITY_ENTITIES = [
   ],
   controllers: [AuthController],
   providers: [
+    Argon2PasswordHasherService,
     {
       provide: PASSWORD_HASHER,
-      useClass: Argon2PasswordHasherService,
+      useExisting: Argon2PasswordHasherService,
     },
-    Argon2PasswordHasherService,
     SecureTokenService,
+    NodemailerEmailSenderService,
     {
       provide: EMAIL_SENDER,
-      useClass: NodemailerEmailSenderService,
+      useExisting: NodemailerEmailSenderService,
     },
-    NodemailerEmailSenderService,
     RegistrationService,
     EmailVerificationService,
     AuthenticationService,

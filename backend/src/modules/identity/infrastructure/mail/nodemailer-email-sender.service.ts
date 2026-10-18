@@ -34,10 +34,16 @@ export class NodemailerEmailSenderService implements EmailSender {
     this.resendApiKey = apiKey && apiKey.length > 0 ? apiKey : null;
 
     // RESEND_FROM: onboarding@resend.dev is Resend's default sandbox domain for testing only.
-    // Production requires a custom verified sending domain configured via RESEND_FROM.
-    this.resendFrom =
-      this.configService.get<string>('RESEND_FROM') ||
-      'Naba Academy <onboarding@resend.dev>';
+    // In production, RESEND_FROM must be explicitly configured when RESEND_API_KEY is configured.
+    // In development and test environments, it falls back to 'Naba Academy <onboarding@resend.dev>'.
+    const configuredFrom = this.configService.get<string>('RESEND_FROM')?.trim();
+    if (configuredFrom && configuredFrom.length > 0) {
+      this.resendFrom = configuredFrom;
+    } else if (!this.isProduction) {
+      this.resendFrom = 'Naba Academy <onboarding@resend.dev>';
+    } else {
+      this.resendFrom = '';
+    }
 
     // 2. SMTP Configuration (Fallback)
     this.smtpFromAddress =
@@ -68,10 +74,16 @@ export class NodemailerEmailSenderService implements EmailSender {
 
     // Provider initialization logging and environment safety checks
     if (this.resendApiKey) {
-      this.logger.log(
-        `Email delivery: Primary provider configured with Resend API (Sender: ${this.resendFrom})`,
-      );
-      if (this.resendFrom.includes('onboarding@resend.dev')) {
+      if (this.isProduction && !this.resendFrom) {
+        this.logger.error(
+          'CRITICAL: RESEND_FROM must be explicitly configured when RESEND_API_KEY is configured in production environment.',
+        );
+      } else {
+        this.logger.log(
+          `Email delivery: Primary provider configured with Resend API (Sender: ${this.resendFrom})`,
+        );
+      }
+      if (this.resendFrom && this.resendFrom.includes('onboarding@resend.dev')) {
         this.logger.warn(
           'Using onboarding@resend.dev as Resend sender. Note: onboarding@resend.dev is strictly for testing/sandbox use and requires a verified domain for production delivery.',
         );
@@ -102,6 +114,12 @@ export class NodemailerEmailSenderService implements EmailSender {
   async sendEmail(options: SendEmailOptions): Promise<void> {
     // 1. Primary: Resend REST API
     if (this.resendApiKey) {
+      if (this.isProduction && !this.resendFrom) {
+        const errorMsg =
+          'Email delivery failed: RESEND_FROM must be explicitly configured when RESEND_API_KEY is configured in production environment.';
+        this.logger.error(errorMsg);
+        throw new Error(errorMsg);
+      }
       try {
         await this.sendViaResend(options);
         return;

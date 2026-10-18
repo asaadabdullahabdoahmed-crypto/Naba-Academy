@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { createCorsOriginValidator } from './config/cors.config';
 import { formatValidationErrors, ValidationException } from './common/pipes/validation-formatter';
@@ -27,9 +26,6 @@ async function bootstrap(): Promise<void> {
       hidePoweredBy: true,
     }),
   );
-
-  // Parse HTTP cookies for session and CSRF cookie transport
-  app.use(cookieParser());
 
   // Explicitly remove X-Powered-By header to prevent technology fingerprinting
   const expressApp = app.getHttpAdapter().getInstance();

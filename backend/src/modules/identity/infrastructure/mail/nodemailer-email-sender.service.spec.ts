@@ -82,6 +82,27 @@ describe('NodemailerEmailSenderService (Hybrid Resend & SMTP)', () => {
         }),
       ).rejects.toThrow(/No email provider configured in production/);
     });
+
+    it('should throw an error in production when RESEND_API_KEY is set but RESEND_FROM is unconfigured', async () => {
+      const configService = {
+        get: jest.fn((key: string, defaultValue?: unknown) => {
+          if (key === 'NODE_ENV') return 'production';
+          if (key === 'RESEND_API_KEY') return 're_test_secret_key_123';
+          if (key === 'APP_URL') return 'https://naba-academy-frontend.onrender.com';
+          return defaultValue;
+        }),
+      } as unknown as ConfigService;
+
+      const service = new NodemailerEmailSenderService(configService);
+
+      await expect(
+        service.sendEmail({
+          to: 'student@example.com',
+          subject: 'Test Subject',
+          html: '<p>Test</p>',
+        }),
+      ).rejects.toThrow(/RESEND_FROM must be explicitly configured when RESEND_API_KEY is configured in production/);
+    });
   });
 
   describe('Resend API (Primary Provider)', () => {

@@ -87,6 +87,36 @@ describe('Configuration & Environment Validation', () => {
       );
     });
 
+    it('should fail startup when RESEND_FROM is missing with RESEND_API_KEY in production', () => {
+      const config = {
+        NODE_ENV: 'production',
+        PORT: 8080,
+        API_PREFIX: 'api/v1',
+        CORS_ORIGINS: 'https://naba.edu.sa',
+        DATABASE_URL: 'postgresql://prod_user:secret@db.naba.internal:5432/naba_prod',
+        RESEND_API_KEY: 're_dummy_key_for_testing',
+      };
+
+      expect(() => validateEnvironment(config)).toThrow(
+        /RESEND_FROM must be explicitly configured when RESEND_API_KEY is configured in production environment/,
+      );
+    });
+
+    it('should pass startup when RESEND_FROM is explicitly configured with RESEND_API_KEY in production', () => {
+      const config = {
+        NODE_ENV: 'production',
+        PORT: 8080,
+        API_PREFIX: 'api/v1',
+        CORS_ORIGINS: 'https://naba.edu.sa',
+        DATABASE_URL: 'postgresql://prod_user:secret@db.naba.internal:5432/naba_prod',
+        RESEND_API_KEY: 're_dummy_key_for_testing',
+        RESEND_FROM: 'Naba Academy <onboarding@resend.dev>',
+      };
+
+      const result = validateEnvironment(config);
+      expect(result.RESEND_FROM).toBe('Naba Academy <onboarding@resend.dev>');
+    });
+
     it('should fail startup when NODE_ENV is invalid', () => {
       const config = {
         NODE_ENV: 'invalid_environment',

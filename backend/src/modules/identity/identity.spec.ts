@@ -189,4 +189,23 @@ describe('Identity Module & Persistence Architecture', () => {
       expect(combinedDownSql).toContain('DROP TABLE IF EXISTS "users"');
     });
   });
+
+  describe('Provider Injection Configuration', () => {
+    it('configures PASSWORD_HASHER and EMAIL_SENDER with useExisting to avoid duplicate instances', () => {
+      const moduleMetadata = Reflect.getMetadata('providers', IdentityModule);
+      expect(moduleMetadata).toBeDefined();
+
+      const passwordHasherProvider = moduleMetadata.find(
+        (p: any) => p && typeof p === 'object' && p.provide && p.provide.toString().includes('PASSWORD_HASHER'),
+      );
+      expect(passwordHasherProvider).toBeDefined();
+      expect(passwordHasherProvider.useExisting).toBeDefined();
+
+      const emailSenderProvider = moduleMetadata.find(
+        (p: any) => p && typeof p === 'object' && p.provide && p.provide.toString().includes('EMAIL_SENDER'),
+      );
+      expect(emailSenderProvider).toBeDefined();
+      expect(emailSenderProvider.useExisting).toBeDefined();
+    });
+  });
 });
