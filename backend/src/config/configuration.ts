@@ -112,8 +112,11 @@ export default (): Configuration => {
       smtpHost: process.env.SMTP_HOST,
       smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
       smtpUser: process.env.SMTP_USER,
-      smtpPass: process.env.SMTP_PASS,
-      mailFrom: process.env.MAIL_FROM || 'Naba Academy <no-reply@naba.edu.sa>',
+      mailFrom:
+        process.env.MAIL_FROM ||
+        (nodeEnv === Environment.Production
+          ? ''
+          : 'Naba Academy Dev <dev@localhost>'),
       appUrl: (
         process.env.APP_URL ||
         process.env.FRONTEND_BASE_URL ||

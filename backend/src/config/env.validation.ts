@@ -243,6 +243,19 @@ export function validateEnvironment(config: Record<string, unknown>): Environmen
     );
   }
 
+  // In production, if SMTP is configured, MAIL_FROM must also be explicitly configured.
+  if (
+    validatedConfig.NODE_ENV === Environment.Production &&
+    validatedConfig.SMTP_HOST &&
+    validatedConfig.SMTP_USER &&
+    validatedConfig.SMTP_PASS &&
+    (!validatedConfig.MAIL_FROM || validatedConfig.MAIL_FROM.trim().length === 0)
+  ) {
+    throw new Error(
+      `[ConfigValidationError] Backend environment configuration validation failed:\n  - MAIL_FROM: MAIL_FROM must be explicitly configured when SMTP is configured in production environment`,
+    );
+  }
+
   // Validate CORS origins rules for the validated environment
   parseCorsOrigins(validatedConfig.CORS_ORIGINS, validatedConfig.NODE_ENV);
 

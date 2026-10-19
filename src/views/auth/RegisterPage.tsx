@@ -19,8 +19,6 @@ export interface RegistrationFormData {
   phone: string;
   password: string;
   nationalId: string;
-  program: string;
-  highSchoolGpa: string;
 }
 
 export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
@@ -34,8 +32,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
     phone: '',
     password: '',
     nationalId: '',
-    program: 'BS-CS',
-    highSchoolGpa: '',
   });
 
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
@@ -227,7 +223,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
             </label>
             <input
               type="tel"
-              required
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="05XXXXXXXX"

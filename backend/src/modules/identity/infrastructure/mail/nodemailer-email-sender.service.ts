@@ -46,9 +46,14 @@ export class NodemailerEmailSenderService implements EmailSender {
     }
 
     // 2. SMTP Configuration (Fallback)
-    this.smtpFromAddress =
-      this.configService.get<string>('MAIL_FROM') ||
-      'Naba Academy <no-reply@naba.edu.sa>';
+    const configuredMailFrom = this.configService.get<string>('MAIL_FROM')?.trim();
+    if (configuredMailFrom && configuredMailFrom.length > 0) {
+      this.smtpFromAddress = configuredMailFrom;
+    } else if (!this.isProduction) {
+      this.smtpFromAddress = 'Naba Academy Dev <dev@localhost>';
+    } else {
+      this.smtpFromAddress = '';
+    }
 
     const host = this.configService.get<string>('SMTP_HOST');
     const port = Number(this.configService.get<number>('SMTP_PORT', 587));
@@ -63,6 +68,11 @@ export class NodemailerEmailSenderService implements EmailSender {
         auth: { user, pass },
       });
       this.logger.log(`Nodemailer initialized with SMTP host: ${host}:${port}`);
+      if (this.isProduction && !this.smtpFromAddress) {
+        this.logger.error(
+          'CRITICAL: MAIL_FROM must be explicitly configured when SMTP is configured in production environment.',
+        );
+      }
     }
 
     // 3. Application Base URL for outbound email action links
@@ -234,6 +244,13 @@ export class NodemailerEmailSenderService implements EmailSender {
   private async sendViaSmtp(options: SendEmailOptions): Promise<void> {
     if (!this.transporter) {
       throw new Error('SMTP transporter is not configured');
+    }
+
+    if (this.isProduction && !this.smtpFromAddress) {
+      const errorMsg =
+        'Email delivery failed: MAIL_FROM must be explicitly configured when sending via SMTP in production environment.';
+      this.logger.error(errorMsg);
+      throw new Error(errorMsg);
     }
 
     await this.transporter.sendMail({

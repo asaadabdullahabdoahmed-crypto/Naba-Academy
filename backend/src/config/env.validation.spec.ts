@@ -117,6 +117,40 @@ describe('Configuration & Environment Validation', () => {
       expect(result.RESEND_FROM).toBe('Naba Academy <onboarding@resend.dev>');
     });
 
+    it('should fail startup when MAIL_FROM is missing with SMTP credentials in production', () => {
+      const config = {
+        NODE_ENV: 'production',
+        PORT: 8080,
+        API_PREFIX: 'api/v1',
+        CORS_ORIGINS: 'https://naba.edu.sa',
+        DATABASE_URL: 'postgresql://prod_user:secret@db.naba.internal:5432/naba_prod',
+        SMTP_HOST: 'smtp.sendgrid.net',
+        SMTP_USER: 'apikey',
+        SMTP_PASS: 'smtp-secret-pass',
+      };
+
+      expect(() => validateEnvironment(config)).toThrow(
+        /MAIL_FROM must be explicitly configured when SMTP is configured in production environment/,
+      );
+    });
+
+    it('should pass startup when MAIL_FROM is explicitly configured with SMTP credentials in production', () => {
+      const config = {
+        NODE_ENV: 'production',
+        PORT: 8080,
+        API_PREFIX: 'api/v1',
+        CORS_ORIGINS: 'https://naba.edu.sa',
+        DATABASE_URL: 'postgresql://prod_user:secret@db.naba.internal:5432/naba_prod',
+        SMTP_HOST: 'smtp.sendgrid.net',
+        SMTP_USER: 'apikey',
+        SMTP_PASS: 'smtp-secret-pass',
+        MAIL_FROM: 'Naba Academy <no-reply@verified-domain.com>',
+      };
+
+      const result = validateEnvironment(config);
+      expect(result.MAIL_FROM).toBe('Naba Academy <no-reply@verified-domain.com>');
+    });
+
     it('should fail startup when NODE_ENV is invalid', () => {
       const config = {
         NODE_ENV: 'invalid_environment',

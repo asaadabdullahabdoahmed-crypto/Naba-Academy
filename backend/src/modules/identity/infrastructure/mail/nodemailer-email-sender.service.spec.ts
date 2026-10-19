@@ -103,6 +103,30 @@ describe('NodemailerEmailSenderService (Hybrid Resend & SMTP)', () => {
         }),
       ).rejects.toThrow(/RESEND_FROM must be explicitly configured when RESEND_API_KEY is configured in production/);
     });
+
+    it('should throw an error in production when sending via SMTP if MAIL_FROM is unconfigured', async () => {
+      const configService = {
+        get: jest.fn((key: string, defaultValue?: unknown) => {
+          if (key === 'NODE_ENV') return 'production';
+          if (key === 'SMTP_HOST') return 'smtp.example.com';
+          if (key === 'SMTP_PORT') return 587;
+          if (key === 'SMTP_USER') return 'smtp_user';
+          if (key === 'SMTP_PASS') return 'smtp_pass';
+          if (key === 'APP_URL') return 'https://naba-academy-frontend.onrender.com';
+          return defaultValue;
+        }),
+      } as unknown as ConfigService;
+
+      const service = new NodemailerEmailSenderService(configService);
+
+      await expect(
+        service.sendEmail({
+          to: 'student@example.com',
+          subject: 'Test Subject',
+          html: '<p>Test</p>',
+        }),
+      ).rejects.toThrow(/MAIL_FROM must be explicitly configured when sending via SMTP in production/);
+    });
   });
 
   describe('Resend API (Primary Provider)', () => {
@@ -170,6 +194,7 @@ describe('NodemailerEmailSenderService (Hybrid Resend & SMTP)', () => {
         get: jest.fn((key: string, defaultValue?: unknown) => {
           if (key === 'NODE_ENV') return 'production';
           if (key === 'RESEND_API_KEY') return 're_test_secret_key_123';
+          if (key === 'RESEND_FROM') return 'Naba Academy <onboarding@resend.dev>';
           if (key === 'APP_URL') return 'https://naba-academy-frontend.onrender.com';
           return defaultValue;
         }),
@@ -197,10 +222,12 @@ describe('NodemailerEmailSenderService (Hybrid Resend & SMTP)', () => {
         get: jest.fn((key: string, defaultValue?: unknown) => {
           if (key === 'NODE_ENV') return 'production';
           if (key === 'RESEND_API_KEY') return 're_test_secret_key_123';
+          if (key === 'RESEND_FROM') return 'Naba Academy <onboarding@resend.dev>';
           if (key === 'SMTP_HOST') return 'smtp.example.com';
           if (key === 'SMTP_PORT') return 587;
           if (key === 'SMTP_USER') return 'smtp_user';
           if (key === 'SMTP_PASS') return 'smtp_pass';
+          if (key === 'MAIL_FROM') return 'Naba Academy <no-reply@verified-domain.com>';
           if (key === 'APP_URL') return 'https://naba-academy-frontend.onrender.com';
           return defaultValue;
         }),
