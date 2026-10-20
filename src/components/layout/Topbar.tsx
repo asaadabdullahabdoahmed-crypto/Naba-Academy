@@ -47,7 +47,7 @@ export const Topbar: React.FC<TopbarProps> = ({
     } catch {
       // Continue navigation even if network error
     }
-    navigate(`/${locale}/auth/login`);
+    navigate(`/${locale}/auth/login`, { replace: true });
   };
 
   const handleLanguageSwitch = () => {

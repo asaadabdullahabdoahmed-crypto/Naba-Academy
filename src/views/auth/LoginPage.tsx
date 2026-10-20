@@ -74,7 +74,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ locale }) => {
         targetPath = `/${locale}/alumni/dashboard`;
       }
 
-      navigate(targetPath);
+      navigate(targetPath, { replace: true });
     } catch (err: unknown) {
       setIsSubmitting(false);
       const apiErr = err as ApiError;

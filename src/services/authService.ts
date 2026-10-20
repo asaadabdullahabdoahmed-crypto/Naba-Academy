@@ -141,7 +141,9 @@ export const authService = {
    * Fetch current authenticated user profile using HttpOnly cookie session
    */
   async getMe(): Promise<SafeUserProfile> {
-    const response = await apiClient.get<{ user: SafeUserProfile }>('/auth/me');
+    const response = await apiClient.get<{ user: SafeUserProfile }>('/auth/me', {
+      cache: 'no-store',
+    });
     return response.user;
   },
 
@@ -149,7 +151,9 @@ export const authService = {
    * Retrieve active CSRF token for current session
    */
   async getCsrf(): Promise<string> {
-    const response = await apiClient.get<{ csrfToken: string }>('/auth/csrf');
+    const response = await apiClient.get<{ csrfToken: string }>('/auth/csrf', {
+      cache: 'no-store',
+    });
     if (response.csrfToken) {
       setCsrfToken(response.csrfToken);
     }
