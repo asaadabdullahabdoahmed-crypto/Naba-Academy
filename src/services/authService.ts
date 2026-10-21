@@ -98,11 +98,14 @@ export interface ResetPasswordResult {
 
 export interface ActiveSessionItem {
   id: string;
-  userAgent: string | null;
-  ipAddress: string | null;
-  deviceLabel: string | null;
+  device?: string;
+  browser?: string;
+  userAgent?: string | null;
+  ipAddress?: string | null;
+  deviceLabel?: string | null;
   createdAt: string;
-  lastActivityAt: string;
+  lastActiveAt?: string;
+  lastActivityAt?: string;
   isCurrent: boolean;
 }
 
