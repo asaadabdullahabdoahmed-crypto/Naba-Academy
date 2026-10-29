@@ -42,12 +42,17 @@ export interface EmailConfig {
   appUrl: string;
 }
 
+export interface AcademicCatalogConfig {
+  readsEnabled: boolean;
+}
+
 export interface Configuration {
   app: AppConfig;
   database: DatabaseConfig;
   redis: RedisConfig;
   storage: StorageConfig;
   email: EmailConfig;
+  academicCatalog: AcademicCatalogConfig;
 }
 
 export default (): Configuration => {
@@ -122,6 +127,9 @@ export default (): Configuration => {
         process.env.FRONTEND_BASE_URL ||
         'https://naba-academy-frontend.onrender.com'
       ).replace(/\/+$/, ''),
+    },
+    academicCatalog: {
+      readsEnabled: process.env.ACADEMIC_CATALOG_READS_ENABLED === 'true',
     },
   };
 };

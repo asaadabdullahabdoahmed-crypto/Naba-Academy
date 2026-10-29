@@ -22,6 +22,23 @@ describe('Configuration & Environment Validation', () => {
       expect(result.NODE_ENV).toBe(Environment.Development);
       expect(result.PORT).toBe(4000);
       expect(result.API_PREFIX).toBe('api/v1');
+      expect(result.ACADEMIC_CATALOG_READS_ENABLED).toBe(false);
+    });
+
+    it('requires an explicit boolean to enable provisional academic catalog reads', () => {
+      expect(
+        validateEnvironment({
+          NODE_ENV: 'development',
+          ACADEMIC_CATALOG_READS_ENABLED: 'true',
+        }).ACADEMIC_CATALOG_READS_ENABLED,
+      ).toBe(true);
+
+      expect(() =>
+        validateEnvironment({
+          NODE_ENV: 'development',
+          ACADEMIC_CATALOG_READS_ENABLED: 'yes',
+        }),
+      ).toThrow(/ACADEMIC_CATALOG_READS_ENABLED must be a boolean/);
     });
 
     it('should validate and pass a valid production configuration', () => {

@@ -1,4 +1,7 @@
 -- PROPOSAL ONLY: academic structure v1.
+-- Historical review artifact. The provisional isolated-development design now
+-- lives in backend/src/database/migrations/1793299914088-CreateAcademicFoundation.ts
+-- and is not institutionally approved or authorized for Neon execution.
 -- Review and obtain explicit database approval before applying to any database.
 -- No seed/catalog records are included. Existing users.* academic text fields are
 -- retained; mapping them to program IDs requires an approved, verified crosswalk.

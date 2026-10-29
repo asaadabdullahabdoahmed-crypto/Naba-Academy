@@ -1,9 +1,13 @@
 # Academic Structure v1 API Proposal
 
-**Status:** Review proposal; only the legacy student academic-profile endpoint is implemented. Catalog endpoints and the normalized profile extension are not implemented.
+**Status:** Approval-gated review proposal. The legacy student academic-profile endpoint remains the only operational/live academic API. Provisional catalog read code has been added behind a default-off feature flag; it is not live-ready until the schema and vocabulary are approved and deployed.
 
 **Base path:** `/api/v1`
 **Data source:** Proposed schema in `academic-structure-v1-migration.sql`. No catalog records are seeded.
+
+The provisional development implementation uses a separate TypeORM migration with a credential-level reference table, dated placement history, terms, courses, and term-specific offerings. It remains approval-gated and the catalog-read feature flag is off by default; this proposal's current-only placement shape is retained here as a historical review artifact, not as the implementation schema.
+
+Implementation boundary: paginated catalog reads return active rows only; `includeInactive` is rejected. Program ID lookup can return inactive, non-deleted catalog records for historical interpretation. The existing student profile remains legacy-only, and no catalog or placement write operation is provided.
 
 ## Relationships and profile linking
 

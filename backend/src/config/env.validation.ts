@@ -51,6 +51,15 @@ export class EnvironmentVariables {
     if (value === 'false' || value === false) return false;
     return value;
   })
+  @IsBoolean({ message: 'ACADEMIC_CATALOG_READS_ENABLED must be a boolean' })
+  @IsOptional()
+  ACADEMIC_CATALOG_READS_ENABLED = false;
+
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
   @IsBoolean({ message: 'DATABASE_SSL must be a boolean' })
   @IsOptional()
   DATABASE_SSL?: boolean = false;
