@@ -21,7 +21,7 @@
 | **07C** | Login, Session & Cookie Transport | `COMPLETE` | STEP 07B | Session management, HTTP-only cookie transport, CSRF protection, login & logout endpoints (07C-1: COMPLETE, 07C-2: COMPLETE, 07C-3: COMPLETE) |
 | **07D** | Password Reset Workflows | `COMPLETE` | STEP 07C | Forgot password token generation, secure reset flows, session revocation, and email notifications |
 | **07E** | Identity E2E & Security Hardening | `COMPLETE` | STEP 07D | Comprehensive backend E2E auth security suite, brute-force throttling, security regression gates |
-| **07F** | Frontend Auth Integration | `NOT STARTED` | STEP 07E | Wire frontend views to real backend endpoints after backend authentication passes all security gates |
+| **07F** | Frontend Auth Integration | `COMPLETE` | STEP 07E | Wire frontend views to real backend endpoints and restrict portal routes by canonical role; backend domain RBAC remains required |
 | **08** | Academic Structure Backend | `PLANNED` | STEP 07 | College, department, major, and curriculum data models and endpoints |
 | **09** | Admissions | `PLANNED` | STEP 08 | Application submission, document intake, admission approval workflows |
 | **10** | Student Records | `PLANNED` | STEP 09 | Term records, transcripts, academic standings, and student profile API |

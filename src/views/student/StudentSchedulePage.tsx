@@ -77,13 +77,13 @@ export const StudentSchedulePage: React.FC<StudentSchedulePageProps> = ({ locale
           </div>
 
           <h3 className="text-base md:text-lg font-bold text-[#102033] mb-2">
-            {isAr ? 'لا توجد محاضرات مجدولة لهذا اليوم' : 'No lectures scheduled for this day'}
+            {isAr ? 'بيانات الجدول غير متاحة بعد' : 'Schedule information is not available yet.'}
           </h3>
 
           <p className="text-xs text-[#607086] max-w-lg mx-auto mb-6 leading-relaxed">
             {isAr
-              ? 'يظهر جدول المحاضرات الأسبوعية تلقائيًا بناءً على الشعب والمقررات المسجلة في خطتك الدراسية.'
-              : 'The weekly timetable updates automatically in accordance with your registered course sections.'}
+              ? 'لم يتم ربط جدول المحاضرات ببيانات الشعب والمقررات؛ لا تعني هذه الحالة عدم وجود محاضرات.'
+              : 'The timetable is not connected to course and section data yet; this does not mean there are no lectures.'}
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">

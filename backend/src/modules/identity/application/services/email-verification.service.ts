@@ -119,7 +119,7 @@ export class EmailVerificationService {
     const genericResponse: ResendVerificationResult = {
       success: true,
       message:
-        'If an unverified account exists with this email address, a new verification link has been sent.',
+        'If an unverified account exists, your request was received; email delivery is not confirmed by this response.',
     };
 
     if (!email) {
@@ -185,9 +185,9 @@ export class EmailVerificationService {
     // Send email
     try {
       await this.emailSender.sendVerificationEmail(user.email, rawToken);
-    } catch (err: unknown) {
+    } catch {
       this.logger.error(
-        `Failed to resend verification email to ${user.email}: ${(err as Error).message}`,
+        'Verification email resend failed. Check the email provider configuration and provider logs.',
       );
     }
 

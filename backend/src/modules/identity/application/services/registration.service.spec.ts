@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Repository, DataSource, EntityManager } from 'typeorm';
 import { RegistrationService } from './registration.service';
 import { UserEntity } from '../../infrastructure/persistence/entities/user.entity';
@@ -98,7 +99,7 @@ describe('RegistrationService', () => {
 
     expect(result).toBeDefined();
     expect(result.status).toBe('verification_required');
-    expect(result.message).toContain('If this email address is eligible');
+    expect(result.message).toContain('Registration request received');
     expect(emailSender.sendVerificationEmail).not.toHaveBeenCalled();
     expect(dataSource.transaction).not.toHaveBeenCalled();
   });
@@ -158,6 +159,26 @@ describe('RegistrationService', () => {
       'NewStudent@Naba.EDU.SA',
       expect.any(String),
     );
+  });
+
+  it('does not claim delivery when verification email sending fails', async () => {
+    (userRepository.findOne as jest.Mock).mockResolvedValue(null);
+    (emailSender.sendVerificationEmail as jest.Mock).mockRejectedValue(
+      new Error('private provider response'),
+    );
+    const errorLog = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+
+    try {
+      const result = await service.register(validRegistrationInput);
+
+      expect(result.message).toContain('delivery is not confirmed');
+      expect(errorLog.mock.calls.flat().join(' ')).not.toContain('private provider response');
+      expect(errorLog).toHaveBeenCalledWith(
+        'Verification email delivery failed. Check the email provider configuration and provider logs.',
+      );
+    } finally {
+      errorLog.mockRestore();
+    }
   });
 
   it('should support registration without optional phone', async () => {

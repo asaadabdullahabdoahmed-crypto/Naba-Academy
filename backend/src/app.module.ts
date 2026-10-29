@@ -10,6 +10,7 @@ import { RedisModule } from './infrastructure/redis/redis.module';
 import { JobQueueModule } from './infrastructure/jobs/job-queue.module';
 import { StorageModule } from './infrastructure/storage/storage.module';
 import { IdentityModule } from './modules/identity/identity.module';
+import { AcademicModule } from './modules/academic/academic.module';
 import { AppController } from './app.controller';
 import { TraceIdMiddleware } from './common/middleware/trace-id.middleware';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -28,6 +29,7 @@ import { TransformResponseInterceptor } from './common/interceptors/transform-re
     JobQueueModule,
     StorageModule,
     IdentityModule,
+    AcademicModule,
     HealthModule,
   ],
   controllers: [AppController],

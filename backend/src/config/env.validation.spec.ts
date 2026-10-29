@@ -74,6 +74,22 @@ describe('Configuration & Environment Validation', () => {
       );
     });
 
+    it('should fail validation when database or Redis URLs have no host', () => {
+      expect(() =>
+        validateEnvironment({
+          NODE_ENV: 'development',
+          DATABASE_URL: 'postgresql://',
+        }),
+      ).toThrow(/DATABASE_URL must be a valid PostgreSQL connection URL/);
+
+      expect(() =>
+        validateEnvironment({
+          NODE_ENV: 'development',
+          REDIS_URL: 'redis://',
+        }),
+      ).toThrow(/REDIS_URL must be a valid Redis connection URL/);
+    });
+
     it('should fail startup when DATABASE_URL is missing in production', () => {
       const config = {
         NODE_ENV: 'production',

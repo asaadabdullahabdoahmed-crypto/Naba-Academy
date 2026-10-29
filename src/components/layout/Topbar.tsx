@@ -19,6 +19,7 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { NabaLogo } from '../common/NabaLogo';
 
 import { useAuth } from '../../context/AuthContext';
+import { canAccessPortal } from '../../security/portal-access';
 
 interface TopbarProps {
   locale: Locale;
@@ -68,7 +69,7 @@ export const Topbar: React.FC<TopbarProps> = ({
     { key: 'department', titleKey: 'portals.department', path: `/${locale}/department/dashboard`, icon: Layers },
     { key: 'admin', titleKey: 'portals.admin', path: `/${locale}/admin/dashboard`, icon: Shield },
     { key: 'alumni', titleKey: 'portals.alumni', path: `/${locale}/alumni/dashboard`, icon: Briefcase },
-  ];
+  ] as const;
 
   const currentPortalObj = portalsList.find((p) => p.key === currentPortalKey) || portalsList[1];
 
@@ -121,7 +122,9 @@ export const Topbar: React.FC<TopbarProps> = ({
                   <div className="px-3 py-1.5 text-[11px] font-bold text-[#607086] border-b border-[#DCE3EB] uppercase">
                     {d.common.selectPortal}
                   </div>
-                  {portalsList.map((portal) => (
+                  {portalsList
+                    .filter((portal) => portal.key === 'public' || canAccessPortal(user?.roles ?? [], portal.key))
+                    .map((portal) => (
                     <Link
                       key={portal.key}
                       to={portal.path}
@@ -135,7 +138,7 @@ export const Topbar: React.FC<TopbarProps> = ({
                       <portal.icon size={15} className="text-[#082B50]" />
                       <span>{t(portal.titleKey)}</span>
                     </Link>
-                  ))}
+                    ))}
                 </div>
               </>
             )}

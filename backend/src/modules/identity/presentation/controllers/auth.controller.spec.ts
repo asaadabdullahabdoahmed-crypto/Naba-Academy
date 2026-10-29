@@ -51,7 +51,7 @@ describe('AuthController', () => {
       register: jest.fn().mockResolvedValue({
         status: 'verification_required',
         message:
-          'If this email address is eligible for an account, a verification email has been sent.',
+          'Registration request received. If eligible, check your email for next steps; delivery is not confirmed by this response.',
       }),
     };
 
@@ -118,7 +118,7 @@ describe('AuthController', () => {
       forgotPassword: jest.fn().mockResolvedValue({
         accepted: true,
         message:
-          'If the account is eligible, password reset instructions have been sent.',
+          'If the account is eligible, your request was received; email delivery is not confirmed by this response.',
       }),
       resetPassword: jest.fn().mockResolvedValue({
         success: true,

@@ -77,6 +77,7 @@ export const ar = {
     search: 'بحث',
     loading: 'جاري التحميل...',
     emptyState: 'لا توجد بيانات متاحة حالياً',
+    unavailable: 'غير متاح',
   },
 
   roles: {

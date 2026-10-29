@@ -21,6 +21,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
   const { t, d, isAr } = useTranslation();
   const config = PORTAL_CONFIGS[portalKey] || PORTAL_CONFIGS.student;
+  const settingsUnavailable = portalKey === 'instructor' || portalKey === 'admin';
 
   const currentPath = location.pathname;
 
@@ -101,15 +102,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span className="truncate">{t(item.titleKey)}</span>
                 </div>
 
-                {item.badge && (
+                {(item.badge || item.availability === 'pending') && (
                   <span
                     className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                       isActive
                         ? 'bg-white/20 text-[#D6A53A]'
-                        : 'bg-white/10 text-white/90'
+                        : item.availability === 'pending'
+                          ? 'bg-amber-100/15 text-amber-100'
+                          : 'bg-white/10 text-white/90'
                     }`}
                   >
-                    {item.badge}
+                    {item.availability === 'pending' ? t('common.unavailable') : item.badge}
                   </span>
                 )}
               </Link>
@@ -125,6 +128,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Icons.Settings size={16} className="text-[#D6A53A]" />
             <span>{isAr ? 'الإعدادات' : 'Settings'}</span>
+            {settingsUnavailable && (
+              <span className="ms-auto rounded-md bg-amber-100/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-100">
+                {t('common.unavailable')}
+              </span>
+            )}
           </Link>
         </div>
       </aside>

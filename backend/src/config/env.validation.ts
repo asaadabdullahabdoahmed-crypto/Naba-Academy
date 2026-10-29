@@ -7,7 +7,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  Matches,
+  IsUrl,
   Max,
   Min,
   validateSync,
@@ -41,7 +41,7 @@ export class EnvironmentVariables {
 
   @IsString({ message: 'DATABASE_URL must be a string' })
   @IsOptional()
-  @Matches(/^(postgresql|postgres):\/\/.+/, {
+  @IsUrl({ require_tld: false, protocols: ['postgresql', 'postgres'] }, {
     message: 'DATABASE_URL must be a valid PostgreSQL connection URL (postgresql://...)',
   })
   DATABASE_URL?: string;
@@ -78,7 +78,7 @@ export class EnvironmentVariables {
 
   @IsString({ message: 'REDIS_URL must be a string' })
   @IsOptional()
-  @Matches(/^(redis|rediss):\/\/.+/, {
+  @IsUrl({ require_tld: false, protocols: ['redis', 'rediss'] }, {
     message: 'REDIS_URL must be a valid Redis connection URL (redis://... or rediss://...)',
   })
   REDIS_URL?: string;

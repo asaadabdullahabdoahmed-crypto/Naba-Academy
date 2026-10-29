@@ -61,6 +61,15 @@ export const StudentDashboardPage: React.FC<StudentDashboardPageProps> = ({ loca
       }
     >
       <div className="space-y-6">
+        <div
+          role="status"
+          className="rounded-xl border border-[#DCE3EB] bg-[#F7F9FC] px-4 py-3 text-xs leading-relaxed text-[#607086]"
+        >
+          {isAr
+            ? 'بيانات المقررات والواجبات والجدول الأكاديمي غير متاحة بعد. هذه الحالة لا تعني عدم وجود سجلات للطالب.'
+            : 'Course, assignment, and timetable data are not available yet. These placeholders do not mean that no student records exist.'}
+        </div>
+
         {/* Top Section: دوراتي الحالية (Current Courses) */}
         <div className="bg-white rounded-2xl border border-[#DCE3EB] p-6 shadow-xs">
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#DCE3EB]">
@@ -87,12 +96,12 @@ export const StudentDashboardPage: React.FC<StudentDashboardPageProps> = ({ loca
               <BookOpen size={24} />
             </div>
             <h4 className="text-sm font-bold text-[#102033] mb-1">
-              {isAr ? 'لا توجد مقررات مسجلة حاليًا' : 'No courses are currently registered.'}
+              {isAr ? 'بيانات المقررات غير متاحة بعد' : 'Course information is not available yet.'}
             </h4>
             <p className="text-xs text-[#607086] leading-relaxed mb-5">
               {isAr
-                ? 'ستظهر المقررات الدراسية هنا عند توفر بيانات التسجيل في النظام.'
-                : 'Courses will appear here when registration data becomes available in the system.'}
+                ? 'يتطلب عرض المقررات ربط النظام بخدمة البيانات الأكاديمية المعتمدة.'
+                : 'Displaying courses requires a connection to the approved academic data service.'}
             </p>
             <Link
               to={`/${locale}/student/registration`}
@@ -125,10 +134,10 @@ export const StudentDashboardPage: React.FC<StudentDashboardPageProps> = ({ loca
                   <Video size={18} />
                 </div>
                 <h5 className="text-xs font-bold text-[#102033] mb-1">
-                  {isAr ? 'لا توجد محاضرات مجدولة حاليًا' : 'No upcoming lectures scheduled.'}
+                  {isAr ? 'بيانات المحاضرات غير متاحة بعد' : 'Lecture information is not available yet.'}
                 </h5>
                 <p className="text-[11px] text-[#607086]">
-                  {isAr ? 'ستظهر المحاضرات هنا عند توفر جدول الحصص.' : 'Lectures will appear here once the timetable is published.'}
+                  {isAr ? 'لم يتم ربط جدول المحاضرات بالخدمة الأكاديمية بعد.' : 'The lecture timetable is not connected to the academic service yet.'}
                 </p>
               </div>
             </div>
@@ -161,10 +170,10 @@ export const StudentDashboardPage: React.FC<StudentDashboardPageProps> = ({ loca
                   <CheckCircle2 size={18} />
                 </div>
                 <h5 className="text-xs font-bold text-[#102033] mb-1">
-                  {isAr ? 'لا توجد واجبات حالية' : 'No current assignments.'}
+                  {isAr ? 'بيانات الواجبات غير متاحة بعد' : 'Assignment information is not available yet.'}
                 </h5>
                 <p className="text-[11px] text-[#607086]">
-                  {isAr ? 'ستظهر الواجبات والتكليفات هنا عند إدراجها.' : 'Coursework items will appear here when assigned.'}
+                  {isAr ? 'لم يتم ربط الواجبات بالخدمة الأكاديمية بعد.' : 'Assignments are not connected to the academic service yet.'}
                 </p>
               </div>
             </div>

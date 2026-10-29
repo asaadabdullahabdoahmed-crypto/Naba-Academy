@@ -96,7 +96,8 @@ describe('PasswordResetService', () => {
 
       expect(result).toEqual({
         accepted: true,
-        message: 'If the account is eligible, password reset instructions have been sent.',
+        message:
+          'If the account is eligible, your request was received; email delivery is not confirmed by this response.',
       });
       expect(emailSender.sendPasswordResetEmail).not.toHaveBeenCalled();
       expect(dataSource.transaction).not.toHaveBeenCalled();
@@ -116,7 +117,8 @@ describe('PasswordResetService', () => {
 
       expect(result).toEqual({
         accepted: true,
-        message: 'If the account is eligible, password reset instructions have been sent.',
+        message:
+          'If the account is eligible, your request was received; email delivery is not confirmed by this response.',
       });
       expect(emailSender.sendPasswordResetEmail).not.toHaveBeenCalled();
       expect(dataSource.transaction).not.toHaveBeenCalled();
@@ -136,7 +138,8 @@ describe('PasswordResetService', () => {
 
       expect(result).toEqual({
         accepted: true,
-        message: 'If the account is eligible, password reset instructions have been sent.',
+        message:
+          'If the account is eligible, your request was received; email delivery is not confirmed by this response.',
       });
       expect(emailSender.sendPasswordResetEmail).not.toHaveBeenCalled();
       expect(dataSource.transaction).not.toHaveBeenCalled();
@@ -157,7 +160,8 @@ describe('PasswordResetService', () => {
 
       expect(result).toEqual({
         accepted: true,
-        message: 'If the account is eligible, password reset instructions have been sent.',
+        message:
+          'If the account is eligible, your request was received; email delivery is not confirmed by this response.',
       });
 
       // Verify transaction executed: invalidated prior tokens and saved new token

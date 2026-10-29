@@ -35,6 +35,21 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 30, nullable: true, name: 'phone' })
   phone!: string | null;
 
+  @Column({ type: 'varchar', length: 100, nullable: true, name: 'department_id' })
+  departmentId!: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'department_ar' })
+  departmentAr!: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'department_en' })
+  departmentEn!: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'college_ar' })
+  collegeAr!: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'college_en' })
+  collegeEn!: string | null;
+
   @Column({ type: 'varchar', length: 255, name: 'password_hash' })
   passwordHash!: string;
 

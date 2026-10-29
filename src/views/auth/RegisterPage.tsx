@@ -78,8 +78,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
       setIsSuccess(true);
       setStatusNotice(
         isAr
-          ? 'تم استلام طلب إنشاء الحساب. إذا كان البريد الإلكتروني مؤهلاً فستصلك رسالة لتأكيد البريد. تحقق من صندوق الوارد والرسائل غير المرغوب فيها، ويمكنك استخدام صفحة تأكيد البريد لإعادة الإرسال.'
-          : 'Your registration request has been received. If the email address is eligible, a verification email will be sent. Check your inbox and spam folder, or use the verification page to request another email.'
+          ? 'تم استلام طلب التسجيل. لا يؤكد هذا الرد أهلية البريد أو وصول الرسالة. تحقق من البريد الوارد والرسائل غير المرغوب فيها، وإذا لم تصلك رسالة فاستخدم صفحة تأكيد البريد لإعادة المحاولة.'
+          : 'Your registration request has been received. This response does not confirm eligibility or email delivery. Check your inbox and spam folder; if no message arrives, use the verification page to try again.'
       );
     } catch (err: unknown) {
       const apiErr = err as ApiError;
@@ -98,15 +98,28 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
             ? 'كلمة المرور لا تستوفي معايير الأمان (12 خانة على الأقل مع أحرف وأرقام ورموز).'
             : 'Password does not meet security requirements (min 12 characters with mixed complexity).'
         );
-      } else if (code === 'TOO_MANY_REQUESTS') {
+      } else if (code === 'TOO_MANY_REQUESTS' || code === 'RATE_LIMIT_EXCEEDED') {
         setError(
           isAr
             ? 'تم تجاوز الحد المسموح من المحاولات. يرجى الانتظار والمحاولة لاحقاً.'
             : 'Too many registration requests. Please wait and try again later.'
         );
+      } else if (
+        code === 'VALIDATION_ERROR' ||
+        code === 'BAD_REQUEST' ||
+        apiErr.status === 400 ||
+        apiErr.status === 422
+      ) {
+        setError(
+          isAr
+            ? 'تعذر إنشاء الحساب لأن بعض البيانات غير صحيحة. يرجى التحقق من جميع الحقول والمحاولة مجددًا.'
+            : 'Some registration details are invalid. Please check all fields and try again.'
+        );
       } else {
         setError(
-          msg || (isAr ? 'فشل إنشاء الحساب. يرجى مراجعة البيانات.' : 'Failed to create account. Please check inputs.')
+          isAr
+            ? 'تعذر إنشاء الحساب الآن. يرجى المحاولة لاحقًا.'
+            : msg || 'Failed to create account. Please try again later.'
         );
       }
     } finally {

@@ -78,6 +78,7 @@ export const en: Dictionary = {
     search: 'Search',
     loading: 'Loading...',
     emptyState: 'No data available at this time',
+    unavailable: 'Unavailable',
   },
 
   roles: {

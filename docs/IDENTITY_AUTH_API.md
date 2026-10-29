@@ -333,4 +333,4 @@ backend/src/modules/identity/
 
 - **STEP 07D (Password Reset Workflows)**: `COMPLETE`.
 - **STEP 07E (Identity E2E & Security Hardening)**: `COMPLETE`.
-- **STEP 07F (Frontend Auth Integration)**: `NEXT` (Wire frontend views to real backend endpoints after backend authentication passes all security gates).
+- **STEP 07F (Frontend Auth Integration)**: `COMPLETE` (registration, verification, login, session checks, and canonical-role portal route checks are integrated; backend authorization remains necessary for domain APIs).

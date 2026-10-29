@@ -1,29 +1,78 @@
-import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, Shield, CheckCircle2, Camera, ShieldCheck, ArrowRight, ArrowLeft, Save } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Building2, LoaderCircle, Mail, MapPin, RotateCw, ShieldCheck, User } from 'lucide-react';
 import { PortalPage } from '../../components/scaffold/PortalPage';
 import { Locale, useTranslation } from '../../i18n/dictionaries';
-import { useToast } from '../../components/ui/toast';
+import { useAuth } from '../../context/AuthContext';
+import { ApiError, apiClient } from '../../services/apiClient';
+
+interface StudentAcademicProfile {
+  departmentId: string | null;
+  departmentAr: string | null;
+  departmentEn: string | null;
+  collegeAr: string | null;
+  collegeEn: string | null;
+}
+
+type AcademicProfileState = 'loading' | 'ready' | 'error' | 'forbidden' | 'unauthenticated';
+
 interface StudentProfilePageProps {
   locale: Locale;
 }
 
 export const StudentProfilePage: React.FC<StudentProfilePageProps> = ({ locale }) => {
   const { isAr } = useTranslation();
-  const { toast } = useToast();
-
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  const { user, isLoading: isAuthLoading, refreshUser } = useAuth();
+  const [academicProfile, setAcademicProfile] = useState<StudentAcademicProfile | null>(null);
+  const [academicProfileState, setAcademicProfileState] =
+    useState<AcademicProfileState>('loading');
+  const [retryCount, setRetryCount] = useState(0);
 
   const notAvailable = isAr ? 'غير متوفر' : 'Not available';
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.info(
-      isAr
-        ? 'تحديث بيانات الاتصال يتطلب ربط نظام شؤون الطلاب وقاعدة البيانات'
-        : 'Contact information update requires connection to student records backend service'
-    );
-  };
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (!user) {
+      setAcademicProfileState('unauthenticated');
+      return;
+    }
+
+    let isCurrent = true;
+    setAcademicProfileState('loading');
+
+    apiClient
+      .get<StudentAcademicProfile>('/students/me/academic-profile')
+      .then((profile) => {
+        if (!isCurrent) return;
+        setAcademicProfile(profile);
+        setAcademicProfileState('ready');
+      })
+      .catch((error: unknown) => {
+        if (!isCurrent) return;
+        if (error instanceof ApiError && (error.status === 401 || error.code === 'SESSION_REVOKED')) {
+          setAcademicProfileState('unauthenticated');
+          void refreshUser();
+          return;
+        }
+        setAcademicProfileState(
+          error instanceof ApiError && error.status === 403 ? 'forbidden' : 'error',
+        );
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [isAuthLoading, refreshUser, retryCount, user]);
+
+  const profileName =
+    (isAr ? user?.nameAr : user?.nameEn) || user?.nameAr || user?.nameEn || notAvailable;
+  const department =
+    (isAr ? academicProfile?.departmentAr : academicProfile?.departmentEn) ||
+    (isAr ? academicProfile?.departmentEn : academicProfile?.departmentAr) ||
+    notAvailable;
+  const college =
+    (isAr ? academicProfile?.collegeAr : academicProfile?.collegeEn) ||
+    (isAr ? academicProfile?.collegeEn : academicProfile?.collegeAr) ||
+    notAvailable;
 
   return (
     <PortalPage
@@ -49,19 +98,23 @@ export const StudentProfilePage: React.FC<StudentProfilePageProps> = ({ locale }
           <div className="text-center sm:text-start space-y-1 flex-1">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h2 className="text-base md:text-lg font-bold text-[#102033]">
-                {notAvailable}
+                {profileName}
               </h2>
               <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#EFF3F8] text-[#082B50] border border-[#DCE3EB]">
-                {notAvailable}
+                {isAr ? 'حساب طالب' : 'Student account'}
               </span>
             </div>
             <p className="text-xs text-[#607086]">
-              {notAvailable}
+              {user?.email || notAvailable}
             </p>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1 text-xs text-[#607086]">
               <span className="flex items-center gap-1">
                 <ShieldCheck size={14} className="text-[#082B50]" />
-                <span>{isAr ? 'حساب أكاديمي' : 'Academic Account'}</span>
+                <span>
+                  {user?.nationalId
+                    ? `${isAr ? 'رقم الهوية' : 'National ID'}: ${user.nationalId}`
+                    : isAr ? 'حساب أكاديمي' : 'Academic account'}
+                </span>
               </span>
             </div>
           </div>
@@ -76,72 +129,81 @@ export const StudentProfilePage: React.FC<StudentProfilePageProps> = ({ locale }
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-            <div className="p-3.5 rounded-xl bg-[#F7F9FC] border border-[#DCE3EB]">
-              <span className="text-[#607086] block text-[11px]">{isAr ? 'الرقم الجامعي:' : 'Academic ID:'}</span>
-              <span className="font-bold text-[#082B50] font-mono text-sm mt-0.5 block">{notAvailable}</span>
-            </div>
+          <div
+            className="min-h-28"
+            aria-live="polite"
+            aria-busy={academicProfileState === 'loading'}
+          >
+            {academicProfileState === 'loading' && (
+              <div className="flex items-center justify-center gap-2 py-8 text-sm text-[#607086]">
+                <LoaderCircle size={17} className="animate-spin" aria-hidden="true" />
+                <span>{isAr ? 'جارٍ تحميل البيانات الأكاديمية...' : 'Loading academic information...'}</span>
+              </div>
+            )}
 
-            <div className="p-3.5 rounded-xl bg-[#F7F9FC] border border-[#DCE3EB]">
-              <span className="text-[#607086] block text-[11px]">{isAr ? 'حالة القيد:' : 'Registration Status:'}</span>
-              <span className="font-bold text-[#082B50] text-sm mt-0.5 block">{notAvailable}</span>
-            </div>
+            {academicProfileState === 'ready' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#F7F9FC] border border-[#DCE3EB]">
+                  <MapPin size={17} className="mt-0.5 text-[#082B50]" aria-hidden="true" />
+                  <div>
+                    <span className="text-[#607086] block text-[11px]">{isAr ? 'القسم الأكاديمي' : 'Department'}</span>
+                    <span className="font-bold text-[#082B50] text-sm mt-0.5 block">{department}</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#F7F9FC] border border-[#DCE3EB]">
+                  <Building2 size={17} className="mt-0.5 text-[#082B50]" aria-hidden="true" />
+                  <div>
+                    <span className="text-[#607086] block text-[11px]">{isAr ? 'الكلية' : 'College'}</span>
+                    <span className="font-bold text-[#082B50] text-sm mt-0.5 block">{college}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
-            <div className="p-3.5 rounded-xl bg-[#F7F9FC] border border-[#DCE3EB]">
-              <span className="text-[#607086] block text-[11px]">{isAr ? 'نوع الدراسة:' : 'Study Mode:'}</span>
-              <span className="font-bold text-[#082B50] text-sm mt-0.5 block">{notAvailable}</span>
-            </div>
+            {(academicProfileState === 'error' ||
+              academicProfileState === 'forbidden' ||
+              academicProfileState === 'unauthenticated') && (
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <p className="text-sm text-[#607086]" role="status">
+                  {academicProfileState === 'forbidden'
+                    ? isAr
+                      ? 'ليس لديك صلاحية عرض هذه البيانات الأكاديمية.'
+                      : 'You are not authorized to view this academic information.'
+                    : academicProfileState === 'unauthenticated'
+                      ? isAr
+                        ? 'انتهت صلاحية الجلسة. سجّل الدخول مجددًا لعرض بياناتك.'
+                        : 'Your session is no longer available. Sign in again to view your information.'
+                      : isAr
+                        ? 'تعذر تحميل البيانات الأكاديمية. تحقق من اتصالك ثم أعد المحاولة.'
+                        : 'Academic information could not be loaded. Check your connection and try again.'}
+                </p>
+                {academicProfileState === 'error' && (
+                  <button
+                    type="button"
+                    onClick={() => setRetryCount((count) => count + 1)}
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#DCE3EB] px-3 py-2 text-xs font-bold text-[#082B50] hover:bg-[#EFF3F8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#082B50]"
+                  >
+                    <RotateCw size={14} aria-hidden="true" />
+                    {isAr ? 'إعادة المحاولة' : 'Try again'}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Update Contact Form */}
-        <div className="bg-white rounded-2xl border border-[#DCE3EB] p-6 md:p-8 shadow-xs space-y-5">
+        <div className="bg-[#F7F9FC] rounded-2xl border border-[#DCE3EB] p-5 md:p-6">
           <div className="flex items-center gap-2 pb-3 border-b border-[#DCE3EB]">
-            <User size={18} className="text-[#082B50]" />
+            <Mail size={18} className="text-[#082B50]" />
             <h3 className="text-sm font-bold text-[#102033]">
-              {isAr ? 'تحديث بيانات الاتصال والعنوان' : 'Update Contact Information'}
+              {isAr ? 'بيانات التواصل' : 'Contact information'}
             </h3>
           </div>
-
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-[#102033] mb-1.5">
-                  {isAr ? 'رقم الهاتف المتنقل' : 'Mobile Phone Number'}
-                </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder={isAr ? 'أدخل رقم الهاتف...' : 'Enter phone number...'}
-                  className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3.5 py-2.5 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#102033] mb-1.5">
-                  {isAr ? 'العنوان الوطني أو مدينة الإقامة' : 'City or Residential Address'}
-                </label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder={isAr ? 'المدينة، الحي...' : 'City, district...'}
-                  className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3.5 py-2.5 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="submit"
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#082B50] hover:bg-[#061E38] text-white rounded-lg text-xs font-bold transition-colors shadow-xs cursor-pointer"
-              >
-                <Save size={14} className="text-[#D6A53A]" />
-                <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
-              </button>
-            </div>
-          </form>
+          <p className="pt-3 text-xs leading-relaxed text-[#607086]">
+            {isAr
+              ? 'تعديل الهاتف والعنوان غير متاح حاليًا؛ لم يتم حفظ أي تغييرات محلية.'
+              : 'Phone and address editing is not available yet. No local changes are saved.'}
+          </p>
         </div>
       </div>
     </PortalPage>

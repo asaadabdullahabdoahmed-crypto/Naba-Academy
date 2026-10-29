@@ -107,7 +107,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ locale }) => {
             ? 'تم تعطيل هذا الحساب. يرجى التواصل مع إدارة القبول والتسجيل.'
             : 'This account is disabled. Please contact academic support.'
         );
-      } else if (code === 'TOO_MANY_REQUESTS') {
+      } else if (code === 'TOO_MANY_REQUESTS' || code === 'RATE_LIMIT_EXCEEDED') {
         setError(
           isAr
             ? 'تم تجاوز الحد المسموح من المحاولات. يرجى الانتظار والمحاولة لاحقاً.'

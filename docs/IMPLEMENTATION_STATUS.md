@@ -41,8 +41,9 @@
 ### Backend, Persistence & Security Architecture
 - **Backend Service:** `FOUNDATION IMPLEMENTED (NestJS 10 Modular Monolith under backend/)`
 - **Database (PostgreSQL & TypeORM):** `FOUNDATION IMPLEMENTED (STEP 06C — Data Mapper, TransactionService, DatabaseHealthService, CLI migrations, synchronize: false)`
-- **Real Authentication & JWT:** `NOT IMPLEMENTED (Planned STEP 07)`
-- **Real Authorization (RBAC & Scope):** `NOT IMPLEMENTED (Planned STEP 07)`
+- **Authentication & Cookie Sessions:** `IMPLEMENTED (STEP 07A–07E)`
+- **Backend Authorization (RBAC & Scope):** `NOT IMPLEMENTED (Required for future domain APIs)`
+- **Frontend Portal Access:** `IMPLEMENTED (canonical-role route checks; alumni eligibility awaits academic lifecycle data)`
 - **REST API Endpoints:** `HEALTH & ROOT OPERATIONAL (GET /api/v1/health with DB dependency status, GET /)`
 - **Request Tracing & Security:** `IMPLEMENTED (Server-generated UUID trace IDs, helmet headers, safe CORS)`
 - **Transport Contracts:** `IMPLEMENTED (Unified ApiSuccess<T> and ApiErrorResponse envelopes)`
@@ -77,7 +78,7 @@
 | **STEP 07C** | Login, Session & Cookie Transport | `COMPLETE` | Session management, HTTP-only cookie transport, CSRF protection, login, logout, me, csrf & session management endpoints. (07C-1: `COMPLETE`; 07C-2: `COMPLETE`; 07C-3: `COMPLETE`). Security Hotfix: `APPLIED & VERIFIED`. |
 | **STEP 07D** | Password Reset Workflows | `COMPLETE` | Forgot password token generation, secure reset flows, session revocation, and localized email notifications. |
 | **STEP 07E** | Identity E2E & Security Hardening | `COMPLETE` | Comprehensive backend E2E auth security suite, brute-force throttling, security regression gates. |
-| **STEP 07F** | Frontend Auth Integration | `NOT STARTED` | Wire frontend views to real backend endpoints after backend authentication passes all security gates. |
+| **STEP 07F** | Frontend Auth Integration | `COMPLETE` | Registration, verification, login, and session integration; canonical-role portal route checks. UI checks do not replace backend authorization. |
 
 ---
 
@@ -180,6 +181,5 @@
   - PostgreSQL Live Daemon: `NOT RUN` (No external live DB provisioned in runner environment; transactional logic verified via TypeORM transaction and lock tests).
   - Redis Live Server: `NOT RUN` (Offline in runner; unit-tested with mocked client and verified in-memory fallback).
   - SMTP Live Server: `NOT RUN` (Simulated logging mode verified via Nodemailer test suites).
-
 
 

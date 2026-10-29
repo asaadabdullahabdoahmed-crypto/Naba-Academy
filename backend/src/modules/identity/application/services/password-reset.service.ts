@@ -77,7 +77,8 @@ export class PasswordResetService {
   async forgotPassword(input: ForgotPasswordInput): Promise<ForgotPasswordResult> {
     const genericResponse: ForgotPasswordResult = {
       accepted: true,
-      message: 'If the account is eligible, password reset instructions have been sent.',
+      message:
+        'If the account is eligible, your request was received; email delivery is not confirmed by this response.',
     };
 
     if (!input || !input.email || typeof input.email !== 'string') {
@@ -157,9 +158,9 @@ export class PasswordResetService {
         rawToken,
         input.locale || 'ar',
       );
-    } catch (err: unknown) {
+    } catch {
       this.logger.error(
-        `Failed to deliver password reset email to ${displayEmail}: ${(err as Error).message}`,
+        'Password reset email delivery failed. Check the email provider configuration and provider logs.',
       );
     }
 

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { User, Mail, Award, CheckCircle2, Building, ShieldCheck, Phone, BookOpen, Lock } from 'lucide-react';
+import React from 'react';
+import { Building, CalendarDays, Mail, ShieldCheck, User } from 'lucide-react';
 import { PortalPage } from '../../components/scaffold/PortalPage';
+import { AccountSessionsPanel } from '../../components/account/AccountSessionsPanel';
+import { useAuth } from '../../context/AuthContext';
 import { Locale, useTranslation } from '../../i18n/dictionaries';
 
 interface InstructorProfilePageProps {
@@ -8,107 +10,96 @@ interface InstructorProfilePageProps {
 }
 
 export const InstructorProfilePage: React.FC<InstructorProfilePageProps> = ({ locale }) => {
-  const { isAr } = useTranslation();
-  const na = isAr ? 'غير متوفر' : 'Not available';
-
-  const [officeLocation, setOfficeLocation] = useState('');
+  const { isAr, t, formatDate } = useTranslation();
+  const { user } = useAuth();
+  const displayName = (isAr ? user?.nameAr || user?.nameEn : user?.nameEn || user?.nameAr)
+    || t('instructor.instructorPortalStatus.noProfileName');
+  const roles = user?.roles.map((role) =>
+    (isAr ? role.nameAr || role.nameEn : role.nameEn || role.nameAr) || role.code,
+  ) ?? [];
 
   return (
     <PortalPage
-      title={isAr ? 'الملف الأكاديمي لعضو هيئة التدريس' : 'Faculty Academic Profile'}
-      subtitle={
-        isAr
-          ? 'البيانات الأكاديمية الرسمية، الرتبة العلمية، والاهتمامات البحثية المعتمدة في نبا'
-          : 'Institutional credentials, faculty appointment status, and research focus at NABA'
-      }
+      title={t('instructor.instructorPortalStatus.profile')}
+      subtitle={t('instructor.instructorPortalStatus.identityDescription')}
       breadcrumbs={[
-        { label: isAr ? 'بوابة المحاضر' : 'Faculty Portal', path: `/${locale}/instructor/dashboard` },
-        { label: isAr ? 'الملف الأكاديمي' : 'Profile' },
+        { label: isAr ? 'بوابة عضو هيئة التدريس' : 'Teacher Portal', path: `/${locale}/instructor/dashboard` },
+        { label: t('instructor.instructorPortalStatus.profile') },
       ]}
       locale={locale}
     >
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Identity Header Card with Neutral Values */}
-        <div className="bg-white rounded-2xl border border-[#DCE3EB] p-6 shadow-xs flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          <div className="w-20 h-20 rounded-2xl bg-[#EFF3F8] border border-[#DCE3EB] flex items-center justify-center text-[#082B50] shrink-0">
-            <User size={36} />
+      <div className="mx-auto max-w-4xl space-y-6">
+        <section className="flex flex-col gap-5 rounded-2xl border border-[#DCE3EB] bg-white p-6 shadow-xs sm:flex-row sm:items-center">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#EFF3F8] text-[#082B50]">
+            <User size={30} />
           </div>
-
-          <div className="flex-1 text-center sm:text-start space-y-2">
-            <div>
-              <h2 className="text-lg font-bold text-[#102033]">
-                {na}
-              </h2>
-              <p className="text-xs text-[#607086] mt-0.5">
-                {isAr ? 'الرتبة الأكاديمية: ' : 'Academic Rank: '}{na}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 pt-1 text-xs text-[#607086]">
-              <span className="flex items-center gap-1.5">
-                <Building size={14} className="text-[#082B50]" />
-                <span>{isAr ? 'القسم: ' : 'Department: '}{na}</span>
-              </span>
-              <span className="flex items-center gap-1.5 font-mono">
-                <Mail size={14} className="text-[#082B50]" />
-                <span>{na}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Academic Details Shell */}
-        <div className="bg-white rounded-2xl border border-[#DCE3EB] p-6 shadow-xs space-y-6">
-          <div className="pb-4 border-b border-[#DCE3EB]">
-            <h3 className="text-base font-bold text-[#082B50]">
-              {isAr ? 'البيانات والاهتمامات البحثية' : 'Academic & Research Profile'}
-            </h3>
-            <p className="text-xs text-[#607086] mt-0.5">
-              {isAr ? 'معلومات المكتب الأكاديمي والتخصص الدقيق المعتمدة لدى عمادة الكلية' : 'Office location and research specialization recorded with the deanery'}
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-bold text-[#102033]">{displayName}</h2>
+            <p className="mt-1 flex items-center gap-2 text-sm text-[#607086]">
+              <Mail size={15} />
+              <span className="break-all">{user?.email || '—'}</span>
             </p>
           </div>
+          <span className="inline-flex items-center gap-2 self-start rounded-full border border-[#DCE3EB] bg-[#EFF3F8] px-3 py-1.5 text-xs font-semibold text-[#082B50] sm:self-center">
+            <ShieldCheck size={15} />
+            {user?.primaryRole || '—'}
+          </span>
+        </section>
 
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <section className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-[#DCE3EB] bg-white p-5 shadow-xs">
+            <h3 className="mb-4 text-sm font-bold text-[#082B50]">
+              {isAr ? 'بيانات الحساب الموثقة' : 'Verified Account Details'}
+            </h3>
+            <dl className="space-y-4 text-sm">
               <div>
-                <label className="block text-xs font-semibold text-[#102033] mb-1">
-                  {isAr ? 'مقر المكتب وساعات التواجد' : 'Office Location'}
-                </label>
-                <input
-                  type="text"
-                  value={officeLocation}
-                  onChange={(e) => setOfficeLocation(e.target.value)}
-                  placeholder={isAr ? 'مثال: المبنى الأكاديمي — القاعة 204' : 'e.g., Academic Building — Room 204'}
-                  className="w-full bg-[#EFF3F8] border border-[#DCE3EB] rounded-lg px-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
-                />
+                <dt className="text-xs text-[#607086]">{t('instructor.instructorPortalStatus.accountStatus')}</dt>
+                <dd className="mt-1 font-semibold text-[#102033]">{user?.accountStatus || '—'}</dd>
               </div>
-
               <div>
-                <label className="block text-xs font-semibold text-[#102033] mb-1">
-                  {isAr ? 'حالة التكليف الأكاديمي' : 'Faculty Appointment Status'}
-                </label>
-                <input
-                  type="text"
-                  disabled
-                  value={na}
-                  className="w-full bg-[#EFF3F8] border border-[#DCE3EB] rounded-lg px-3 py-2 text-xs text-[#607086] cursor-not-allowed"
-                />
+                <dt className="text-xs text-[#607086]">{t('instructor.instructorPortalStatus.roles')}</dt>
+                <dd className="mt-1 flex flex-wrap gap-2">
+                  {roles.length ? roles.map((role) => (
+                    <span key={role} className="rounded-full bg-[#EFF3F8] px-2.5 py-1 text-xs text-[#082B50]">
+                      {role}
+                    </span>
+                  )) : '—'}
+                </dd>
               </div>
-            </div>
+              <div>
+                <dt className="text-xs text-[#607086]">
+                  {user?.emailVerifiedAt
+                    ? t('instructor.instructorPortalStatus.verifiedEmail')
+                    : t('instructor.instructorPortalStatus.unverifiedEmail')}
+                </dt>
+                <dd className="mt-1 font-semibold text-[#102033]">
+                  {user?.emailVerifiedAt ? formatDate(user.emailVerifiedAt) : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[#607086]">{t('instructor.instructorPortalStatus.createdAt')}</dt>
+                <dd className="mt-1 font-semibold text-[#102033]">
+                  {user?.createdAt ? formatDate(user.createdAt) : '—'}
+                </dd>
+              </div>
+            </dl>
+          </div>
 
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#082B50]/40 text-white/50 rounded-lg text-xs font-semibold cursor-not-allowed border border-[#DCE3EB]"
-                title={isAr ? 'تعديل البيانات الأكاديمية يتطلب التنسيق مع شؤون هيئة التدريس' : 'Profile updates are synchronized with faculty affairs'}
-              >
-                <Lock size={14} className="text-[#D6A53A]/60" />
-                <span>{isAr ? 'حفظ التحديثات' : 'Save Updates'}</span>
-              </button>
+          <div className="rounded-2xl border border-[#DCE3EB] bg-white p-5 shadow-xs">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-[#082B50]">
+              <Building size={17} />
+              {isAr ? 'البيانات الأكاديمية' : 'Academic Details'}
+            </h3>
+            <p className="text-sm leading-7 text-[#607086]">
+              {t('instructor.instructorPortalStatus.academicDataUnavailable')}
+            </p>
+            <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#EFF3F8] p-3 text-xs font-semibold text-[#607086]">
+              <CalendarDays size={15} />
+              {t('instructor.instructorPortalStatus.unavailableLabel')}
             </div>
-          </form>
-        </div>
+          </div>
+        </section>
+        <AccountSessionsPanel />
       </div>
     </PortalPage>
   );

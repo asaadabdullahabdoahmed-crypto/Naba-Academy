@@ -31,4 +31,15 @@ describe('RedisConfig', () => {
     expect(options.lazyConnect).toBe(true);
     expect(options.enableOfflineQueue).toBe(false);
   });
+
+  it('should keep retrying after three attempts with a capped delay', () => {
+    const mockConfigService = {
+      get: jest.fn().mockReturnValue({ url: 'redis://localhost:6379' }),
+    } as unknown as ConfigService;
+
+    const { options } = createRedisOptions(mockConfigService);
+
+    expect(options.retryStrategy?.(4)).toBe(800);
+    expect(options.retryStrategy?.(10)).toBe(1000);
+  });
 });

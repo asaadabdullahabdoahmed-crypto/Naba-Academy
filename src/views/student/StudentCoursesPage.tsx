@@ -48,8 +48,9 @@ export const StudentCoursesPage: React.FC<StudentCoursesPageProps> = ({ locale }
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              disabled
               placeholder={isAr ? 'البحث في المقررات الأكاديمية...' : 'Search academic courses...'}
-              className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl ps-10 pe-4 py-2.5 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50] transition-colors"
+              className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl ps-10 pe-4 py-2.5 text-xs text-[#102033] disabled:cursor-not-allowed disabled:opacity-70"
             />
           </div>
 
@@ -58,7 +59,8 @@ export const StudentCoursesPage: React.FC<StudentCoursesPageProps> = ({ locale }
             <select
               value={selectedSort}
               onChange={(e) => setSelectedSort(e.target.value)}
-              className="w-full appearance-none bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2.5 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50] cursor-pointer"
+              disabled
+              className="w-full appearance-none bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2.5 text-xs text-[#102033] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <option value="newest">{isAr ? 'الترتيب: الأحدث إدراجاً' : 'Sort: Newest First'}</option>
               <option value="title">{isAr ? 'الترتيب: أبجدياً' : 'Sort: Alphabetical'}</option>
@@ -74,13 +76,13 @@ export const StudentCoursesPage: React.FC<StudentCoursesPageProps> = ({ locale }
           </div>
 
           <h3 className="text-base md:text-lg font-bold text-[#102033] mb-2">
-            {isAr ? 'لا توجد مقررات متاحة للعرض حاليًا' : 'No courses are currently available to display.'}
+            {isAr ? 'دليل المقررات غير متاح بعد' : 'Course catalog is not available yet.'}
           </h3>
 
           <p className="text-xs text-[#607086] max-w-lg mx-auto mb-6 leading-relaxed">
             {isAr
-              ? 'ستظهر المقررات هنا عند توفر بيانات التسجيل في النظام الأكاديمي.'
-              : 'Courses will appear here when registration data becomes available in the academic system.'}
+              ? 'لم يتم ربط دليل المقررات بالخدمة الأكاديمية بعد؛ هذا لا يعني عدم وجود مقررات أو تسجيلات.'
+              : 'The course catalog is not connected to the academic service yet; this does not mean courses or enrollments are absent.'}
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">

@@ -12,14 +12,14 @@ describe('NodemailerEmailSenderService (Hybrid Resend & SMTP)', () => {
     global.fetch = originalFetch;
   });
 
-  describe('Simulation Mode (Development)', () => {
+  describe('Simulation Mode (Tests only)', () => {
     let service: NodemailerEmailSenderService;
     let configService: ConfigService;
 
     beforeEach(() => {
       configService = {
         get: jest.fn((key: string, defaultValue?: unknown) => {
-          if (key === 'NODE_ENV') return 'development';
+          if (key === 'NODE_ENV') return 'test';
           if (key === 'MAIL_FROM') return 'test@naba.edu.sa';
           if (key === 'APP_URL') return 'https://test.naba.edu.sa';
           return defaultValue;
@@ -33,7 +33,7 @@ describe('NodemailerEmailSenderService (Hybrid Resend & SMTP)', () => {
       expect(service).toBeDefined();
     });
 
-    it('should simulate sendEmail when neither Resend nor SMTP is configured', async () => {
+    it('should simulate sendEmail when neither Resend nor SMTP is configured in tests', async () => {
       await expect(
         service.sendEmail({
           to: 'student@example.com',
@@ -43,23 +43,43 @@ describe('NodemailerEmailSenderService (Hybrid Resend & SMTP)', () => {
       ).resolves.not.toThrow();
     });
 
-    it('should simulate sendVerificationEmail when neither provider is configured', async () => {
+    it('should simulate sendVerificationEmail when neither provider is configured in tests', async () => {
       await expect(
         service.sendVerificationEmail('student@example.com', 'raw-token-12345'),
       ).resolves.not.toThrow();
     });
 
-    it('should simulate sendPasswordResetEmail in Arabic using URL fragment without throwing', async () => {
+    it('should simulate sendPasswordResetEmail in Arabic using URL fragment in tests', async () => {
       await expect(
         service.sendPasswordResetEmail('student@example.com', 'raw-reset-token-abc', 'ar'),
       ).resolves.not.toThrow();
     });
 
-    it('should simulate sendPasswordResetEmail in English using URL fragment without throwing', async () => {
+    it('should simulate sendPasswordResetEmail in English using URL fragment in tests', async () => {
       await expect(
         service.sendPasswordResetEmail('student@example.com', 'raw-reset-token-xyz', 'en'),
       ).resolves.not.toThrow();
     });
+  });
+
+  it('should not simulate delivery in development when no provider is configured', async () => {
+    const configService = {
+      get: jest.fn((key: string, defaultValue?: unknown) => {
+        if (key === 'NODE_ENV') return 'development';
+        return defaultValue;
+      }),
+    } as unknown as ConfigService;
+    const service = new NodemailerEmailSenderService(configService);
+
+    await expect(
+      service.sendEmail({
+        to: 'student@example.com',
+        subject: 'Test Subject',
+        html: '<p>Test</p>',
+      }),
+    ).rejects.toThrow(
+      'Email delivery is not configured. Configure Resend or SMTP before sending email.',
+    );
   });
 
   describe('Production Safety Guard', () => {
@@ -80,7 +100,9 @@ describe('NodemailerEmailSenderService (Hybrid Resend & SMTP)', () => {
           subject: 'Test Subject',
           html: '<p>Test</p>',
         }),
-      ).rejects.toThrow(/No email provider configured in production/);
+      ).rejects.toThrow(
+        'Email delivery is not configured. Configure Resend or SMTP before sending email.',
+      );
     });
 
     it('should throw an error in production when RESEND_API_KEY is set but RESEND_FROM is unconfigured', async () => {
@@ -125,7 +147,9 @@ describe('NodemailerEmailSenderService (Hybrid Resend & SMTP)', () => {
           subject: 'Test Subject',
           html: '<p>Test</p>',
         }),
-      ).rejects.toThrow(/MAIL_FROM must be explicitly configured when sending via SMTP in production/);
+      ).rejects.toThrow(
+        'Email delivery failed. Check the email provider configuration and provider logs.',
+      );
     });
   });
 
@@ -208,7 +232,9 @@ describe('NodemailerEmailSenderService (Hybrid Resend & SMTP)', () => {
           subject: 'Welcome to Naba',
           html: '<p>Welcome</p>',
         }),
-      ).rejects.toThrow(/Resend API request failed with HTTP 403/);
+      ).rejects.toThrow(
+        'Email delivery failed. Check the email provider configuration and provider logs.',
+      );
     });
 
     it('should fallback to SMTP if Resend API fails and SMTP is configured', async () => {

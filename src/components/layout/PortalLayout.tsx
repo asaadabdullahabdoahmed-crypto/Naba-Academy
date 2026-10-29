@@ -3,6 +3,7 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { AppShell } from './AppShell';
 import { Locale } from '../../i18n/dictionaries';
 import { useAuth } from '../../context/AuthContext';
+import { canAccessPortal } from '../../security/portal-access';
 
 interface PortalLayoutProps {
   locale: Locale;
@@ -28,6 +29,10 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ locale, portalKey })
 
   if (!isAuthenticated || !user) {
     return <Navigate to={`/${locale}/auth/login`} replace state={{ from: location }} />;
+  }
+
+  if (!canAccessPortal(user.roles, portalKey)) {
+    return <Navigate to={`/${locale}/system/403`} replace state={{ from: location }} />;
   }
 
   return (

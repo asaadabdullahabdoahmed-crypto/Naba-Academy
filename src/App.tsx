@@ -82,28 +82,8 @@ import { StudentSettingsPage } from './views/student/StudentSettingsPage';
 // Instructor views
 import { InstructorDashboardPage } from './views/instructor/InstructorDashboardPage';
 import { InstructorCoursesPage } from './views/instructor/InstructorCoursesPage';
-import { InstructorCourseDetailPage } from './views/instructor/InstructorCourseDetailPage';
-import { InstructorCourseStudentsPage } from './views/instructor/InstructorCourseStudentsPage';
-import { InstructorCourseLecturesPage } from './views/instructor/InstructorCourseLecturesPage';
-import { InstructorCourseAssignmentsPage } from './views/instructor/InstructorCourseAssignmentsPage';
-import { InstructorSectionsPage } from './views/instructor/InstructorSectionsPage';
-import { InstructorStudentsPage } from './views/instructor/InstructorStudentsPage';
-import { InstructorLecturesPage } from './views/instructor/InstructorLecturesPage';
-import { InstructorContentPage } from './views/instructor/InstructorContentPage';
-import { InstructorLiveSessionPage } from './views/instructor/InstructorLiveSessionPage';
-import { InstructorAssignmentsPage } from './views/instructor/InstructorAssignmentsPage';
-import { InstructorGradingPage } from './views/instructor/InstructorGradingPage';
-import { InstructorQuestionBankPage } from './views/instructor/InstructorQuestionBankPage';
-import { InstructorExamsPage } from './views/instructor/InstructorExamsPage';
-import { InstructorAttendancePage } from './views/instructor/InstructorAttendancePage';
-import { InstructorExcusesPage } from './views/instructor/InstructorExcusesPage';
-import { InstructorAnalyticsPage } from './views/instructor/InstructorAnalyticsPage';
-import { InstructorOfficeHoursPage } from './views/instructor/InstructorOfficeHoursPage';
-import { InstructorMessagesPage } from './views/instructor/InstructorMessagesPage';
-import { InstructorAnnouncementsPage } from './views/instructor/InstructorAnnouncementsPage';
-import { InstructorLibraryPage } from './views/instructor/InstructorLibraryPage';
 import { InstructorProfilePage } from './views/instructor/InstructorProfilePage';
-import { InstructorSettingsPage } from './views/instructor/InstructorSettingsPage';
+import { PortalWorkflowUnavailablePage } from './views/shared/PortalWorkflowUnavailablePage';
 
 // Department views
 import { DepartmentDashboardPage } from './views/department/DepartmentDashboardPage';
@@ -126,22 +106,8 @@ import { DepartmentSettingsPage } from './views/department/DepartmentSettingsPag
 import { AdminDashboardPage } from './views/admin/AdminDashboardPage';
 import { AdminUsersPage } from './views/admin/AdminUsersPage';
 import { AdminUserDetailPage } from './views/admin/AdminUserDetailPage';
-import { AdminRolesPage } from './views/admin/AdminRolesPage';
-import { AdminProgramsPage } from './views/admin/AdminProgramsPage';
-import { AdminCoursesPage } from './views/admin/AdminCoursesPage';
-import { AdminDepartmentsPage } from './views/admin/AdminDepartmentsPage';
-import { AdminAdmissionsPage } from './views/admin/AdminAdmissionsPage';
-import { AdminFinancePage } from './views/admin/AdminFinancePage';
-import { AdminReportsPage } from './views/admin/AdminReportsPage';
-import { AdminAuditLogsPage } from './views/admin/AdminAuditLogsPage';
 import { AdminSystemHealthPage } from './views/admin/AdminSystemHealthPage';
-import { AdminCmsNewsPage } from './views/admin/AdminCmsNewsPage';
-import { AdminCmsBannersPage } from './views/admin/AdminCmsBannersPage';
-import { AdminCmsPagesPage } from './views/admin/AdminCmsPagesPage';
-import { AdminSupportPage } from './views/admin/AdminSupportPage';
-import { AdminIntegrationsPage } from './views/admin/AdminIntegrationsPage';
 import { AdminProfilePage } from './views/admin/AdminProfilePage';
-import { AdminSettingsPage } from './views/admin/AdminSettingsPage';
 
 // Alumni views
 import { AlumniDashboardPage } from './views/alumni/AlumniDashboardPage';
@@ -284,30 +250,30 @@ export default function App() {
                   <Route element={<PortalLayout locale={loc} portalKey="instructor" />}>
                     <Route path="instructor/dashboard" element={<InstructorDashboardPage locale={loc} />} />
                     <Route path="instructor/courses" element={<InstructorCoursesPage locale={loc} />} />
-                    <Route path="instructor/courses/:courseId" element={<InstructorCourseDetailPage locale={loc} />} />
-                    <Route path="instructor/courses/:courseId/students" element={<InstructorCourseStudentsPage locale={loc} />} />
-                    <Route path="instructor/courses/:courseId/lectures" element={<InstructorCourseLecturesPage locale={loc} />} />
-                    <Route path="instructor/courses/:courseId/assignments" element={<InstructorCourseAssignmentsPage locale={loc} />} />
-                    <Route path="instructor/sections" element={<InstructorSectionsPage locale={loc} />} />
-                    <Route path="instructor/students" element={<InstructorStudentsPage locale={loc} />} />
-                    <Route path="instructor/lectures" element={<InstructorLecturesPage locale={loc} />} />
-                    <Route path="instructor/content" element={<InstructorContentPage locale={loc} />} />
-                    <Route path="instructor/live" element={<InstructorLiveSessionPage locale={loc} />} />
-                    <Route path="instructor/live-session" element={<InstructorLiveSessionPage locale={loc} />} />
-                    <Route path="instructor/assignments" element={<InstructorAssignmentsPage locale={loc} />} />
-                    <Route path="instructor/grading" element={<InstructorGradingPage locale={loc} />} />
-                    <Route path="instructor/grades" element={<InstructorGradingPage locale={loc} />} />
-                    <Route path="instructor/question-bank" element={<InstructorQuestionBankPage locale={loc} />} />
-                    <Route path="instructor/exams" element={<InstructorExamsPage locale={loc} />} />
-                    <Route path="instructor/attendance" element={<InstructorAttendancePage locale={loc} />} />
-                    <Route path="instructor/excuses" element={<InstructorExcusesPage locale={loc} />} />
-                    <Route path="instructor/analytics" element={<InstructorAnalyticsPage locale={loc} />} />
-                    <Route path="instructor/office-hours" element={<InstructorOfficeHoursPage locale={loc} />} />
-                    <Route path="instructor/messages" element={<InstructorMessagesPage locale={loc} />} />
-                    <Route path="instructor/announcements" element={<InstructorAnnouncementsPage locale={loc} />} />
-                    <Route path="instructor/library" element={<InstructorLibraryPage locale={loc} />} />
+                    <Route path="instructor/courses/:courseId" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/courses/:courseId/students" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/courses/:courseId/lectures" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/courses/:courseId/assignments" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/sections" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/students" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/lectures" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/content" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/live" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/live-session" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/assignments" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/grading" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/grades" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/question-bank" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/exams" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/attendance" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/excuses" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/analytics" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/office-hours" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/messages" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/announcements" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/library" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
                     <Route path="instructor/profile" element={<InstructorProfilePage locale={loc} />} />
-                    <Route path="instructor/settings" element={<InstructorSettingsPage locale={loc} />} />
+                    <Route path="instructor/settings" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
                   </Route>
 
                   {/* DEPARTMENT HEAD PORTAL */}
@@ -344,34 +310,34 @@ export default function App() {
                     <Route path="admin/dashboard" element={<AdminDashboardPage locale={loc} />} />
                     <Route path="admin/users" element={<AdminUsersPage locale={loc} />} />
                     <Route path="admin/users/:userId" element={<AdminUserDetailPage locale={loc} />} />
-                    <Route path="admin/roles" element={<AdminRolesPage locale={loc} />} />
+                    <Route path="admin/roles" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                     <Route path="admin/students" element={<AdminUsersPage locale={loc} />} />
-                    <Route path="admin/programs" element={<AdminProgramsPage locale={loc} />} />
-                    <Route path="admin/curricula" element={<AdminProgramsPage locale={loc} />} />
-                    <Route path="admin/courses" element={<AdminCoursesPage locale={loc} />} />
-                    <Route path="admin/terms" element={<AdminCoursesPage locale={loc} />} />
-                    <Route path="admin/library" element={<AdminCoursesPage locale={loc} />} />
-                    <Route path="admin/departments" element={<AdminDepartmentsPage locale={loc} />} />
-                    <Route path="admin/admissions" element={<AdminAdmissionsPage locale={loc} />} />
-                    <Route path="admin/registration" element={<AdminSettingsPage locale={loc} />} />
-                    <Route path="admin/finance" element={<AdminFinancePage locale={loc} />} />
-                    <Route path="admin/documents" element={<AdminReportsPage locale={loc} />} />
-                    <Route path="admin/graduation" element={<AdminReportsPage locale={loc} />} />
-                    <Route path="admin/reports" element={<AdminReportsPage locale={loc} />} />
-                    <Route path="admin/grades" element={<AdminReportsPage locale={loc} />} />
-                    <Route path="admin/audit" element={<AdminAuditLogsPage locale={loc} />} />
-                    <Route path="admin/audit-logs" element={<AdminAuditLogsPage locale={loc} />} />
-                    <Route path="admin/security" element={<AdminSettingsPage locale={loc} />} />
+                    <Route path="admin/programs" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/curricula" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/courses" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/terms" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/library" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/departments" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/admissions" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/registration" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/finance" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/documents" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/graduation" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/reports" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/grades" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/audit" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/audit-logs" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/security" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                     <Route path="admin/system-status" element={<AdminSystemHealthPage locale={loc} />} />
                     <Route path="admin/system-health" element={<AdminSystemHealthPage locale={loc} />} />
                     <Route path="admin/assessments" element={<AdminSystemHealthPage locale={loc} />} />
-                    <Route path="admin/cms/news" element={<AdminCmsNewsPage locale={loc} />} />
-                    <Route path="admin/cms/banners" element={<AdminCmsBannersPage locale={loc} />} />
-                    <Route path="admin/cms/pages" element={<AdminCmsPagesPage locale={loc} />} />
-                    <Route path="admin/support" element={<AdminSupportPage locale={loc} />} />
-                    <Route path="admin/integrations" element={<AdminIntegrationsPage locale={loc} />} />
+                    <Route path="admin/cms/news" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/cms/banners" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/cms/pages" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/support" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/integrations" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                     <Route path="admin/profile" element={<AdminProfilePage locale={loc} />} />
-                    <Route path="admin/settings" element={<AdminSettingsPage locale={loc} />} />
+                    <Route path="admin/settings" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                   </Route>
 
                   {/* ALUMNI PORTAL */}

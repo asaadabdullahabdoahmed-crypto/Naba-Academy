@@ -26,6 +26,7 @@ import { SessionAuthGuard } from './presentation/guards/session-auth.guard';
 import { CsrfGuard } from './presentation/guards/csrf.guard';
 import { OriginRefererGuard } from './presentation/guards/origin-referer.guard';
 import { RateLimiterGuard } from './presentation/guards/rate-limiter.guard';
+import { RolesGuard } from './presentation/guards/roles.guard';
 
 export const IDENTITY_ENTITIES = [
   UserEntity,
@@ -67,6 +68,7 @@ export const IDENTITY_ENTITIES = [
     CsrfGuard,
     OriginRefererGuard,
     RateLimiterGuard,
+    RolesGuard,
   ],
   exports: [
     TypeOrmModule,
@@ -85,7 +87,7 @@ export const IDENTITY_ENTITIES = [
     CsrfGuard,
     OriginRefererGuard,
     RateLimiterGuard,
+    RolesGuard,
   ],
 })
 export class IdentityModule {}
-

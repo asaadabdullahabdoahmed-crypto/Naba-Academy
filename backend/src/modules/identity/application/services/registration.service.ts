@@ -53,7 +53,7 @@ export class RegistrationService {
     const genericResponse: RegisterUserResult = {
       status: 'verification_required',
       message:
-        'If this email address is eligible for an account, a verification email has been sent.',
+        'Registration request received. If eligible, check your email for next steps; delivery is not confirmed by this response.',
     };
 
     const { email: displayEmail, normalizedEmail } = normalizeEmail(input.email);
@@ -157,9 +157,9 @@ export class RegistrationService {
     // 6. Send verification email (outside transaction)
     try {
       await this.emailSender.sendVerificationEmail(displayEmail, rawToken);
-    } catch (err: unknown) {
+    } catch {
       this.logger.error(
-        `Failed to deliver verification email to ${displayEmail}: ${(err as Error).message}`,
+        'Verification email delivery failed. Check the email provider configuration and provider logs.',
       );
     }
 

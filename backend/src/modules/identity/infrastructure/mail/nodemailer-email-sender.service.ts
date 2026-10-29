@@ -10,7 +10,7 @@ import {
  * Production-grade email delivery service with layered provider priority:
  * 1. Resend API (Primary when RESEND_API_KEY is configured)
  * 2. Nodemailer SMTP (Fallback when SMTP credentials are configured)
- * 3. Simulated delivery (Development and Test environments only)
+ * 3. Simulated delivery (Test environment only)
  *
  * In production, silent simulation is strictly prohibited and throws an explicit error.
  */
@@ -23,11 +23,13 @@ export class NodemailerEmailSenderService implements EmailSender {
   private readonly smtpFromAddress: string;
   private readonly appUrl: string;
   private readonly isProduction: boolean;
+  private readonly isTest: boolean;
 
   constructor(private readonly configService: ConfigService) {
     const nodeEnv =
       this.configService.get<string>('NODE_ENV') || process.env.NODE_ENV || 'development';
     this.isProduction = nodeEnv === 'production';
+    this.isTest = nodeEnv === 'test';
 
     // 1. Resend API Configuration
     const apiKey = this.configService.get<string>('RESEND_API_KEY')?.trim();
@@ -105,10 +107,10 @@ export class NodemailerEmailSenderService implements EmailSender {
         this.logger.error(
           'CRITICAL: Neither RESEND_API_KEY nor SMTP credentials configured in production environment. Outbound email delivery will fail.',
         );
+      } else if (this.isTest) {
+        this.logger.log('Email provider not configured; tests may simulate delivery.');
       } else {
-        this.logger.warn(
-          'Neither RESEND_API_KEY nor SMTP credentials configured. Email sending will run in simulation mode (logged to console).',
-        );
+        this.logger.warn('Email provider not configured. Outbound email delivery is unavailable.');
       }
     }
   }
@@ -117,7 +119,7 @@ export class NodemailerEmailSenderService implements EmailSender {
    * Dispatches email using provider priority:
    * 1. Resend API (Primary)
    * 2. Nodemailer SMTP (Fallback)
-   * 3. Console simulation (Development/Test only)
+   * 3. Console simulation (Test only)
    *
    * In production, throws error if neither provider is configured or if delivery fails.
    */
@@ -133,31 +135,23 @@ export class NodemailerEmailSenderService implements EmailSender {
       try {
         await this.sendViaResend(options);
         return;
-      } catch (resendError: unknown) {
-        this.logger.error(
-          `Resend API delivery failed for ${options.to}: ${(resendError as Error).message}`,
-        );
+      } catch {
+        this.logger.error('Resend email delivery failed. Check provider logs for details.');
 
         // Attempt SMTP fallback if configured
         if (this.transporter) {
-          this.logger.warn(
-            `Attempting SMTP fallback delivery to ${options.to} following Resend failure...`,
-          );
+          this.logger.warn('Attempting configured SMTP fallback after Resend failure.');
           try {
             await this.sendViaSmtp(options);
             return;
-          } catch (smtpError: unknown) {
-            this.logger.error(
-              `SMTP fallback also failed for ${options.to}: ${(smtpError as Error).message}`,
-            );
+          } catch {
+            this.logger.error('SMTP fallback delivery failed. Check provider logs for details.');
           }
         }
 
-        // Re-throw in production so failures are not silently hidden
-        if (this.isProduction) {
-          throw resendError;
-        }
-        return;
+        throw new Error(
+          'Email delivery failed. Check the email provider configuration and provider logs.',
+        );
       }
     }
 
@@ -166,27 +160,24 @@ export class NodemailerEmailSenderService implements EmailSender {
       try {
         await this.sendViaSmtp(options);
         return;
-      } catch (smtpError: unknown) {
-        this.logger.error(
-          `SMTP delivery failed for ${options.to}: ${(smtpError as Error).message}`,
+      } catch {
+        this.logger.error('SMTP email delivery failed. Check provider logs for details.');
+        throw new Error(
+          'Email delivery failed. Check the email provider configuration and provider logs.',
         );
-        if (this.isProduction) {
-          throw smtpError;
-        }
-        return;
       }
     }
 
-    // 3. Fallback: Development simulation only
-    if (this.isProduction) {
-      const errorMsg = `Email delivery failed for ${options.to}: No email provider configured in production (RESEND_API_KEY or SMTP required).`;
-      this.logger.error(errorMsg);
-      throw new Error(errorMsg);
+    // Keep simulation out of real development registrations; only tests may simulate delivery.
+    if (this.isTest) {
+      this.logger.log(`[SIMULATED EMAIL] Subject: ${options.subject}`);
+      return;
     }
 
-    this.logger.log(
-      `[SIMULATED EMAIL] To: ${options.to} | Subject: ${options.subject}`,
-    );
+    const errorMsg =
+      'Email delivery is not configured. Configure Resend or SMTP before sending email.';
+    this.logger.error(errorMsg);
+    throw new Error(errorMsg);
   }
 
   /**
@@ -222,20 +213,10 @@ export class NodemailerEmailSenderService implements EmailSender {
     });
 
     if (!response.ok) {
-      let errorDetail = '';
-      try {
-        const errorJson = (await response.json()) as { message?: string; name?: string };
-        errorDetail = errorJson?.message || JSON.stringify(errorJson);
-      } catch {
-        errorDetail = await response.text().catch(() => '');
-      }
-
-      throw new Error(
-        `Resend API request failed with HTTP ${response.status}: ${errorDetail}`,
-      );
+      throw new Error(`Resend API rejected the request (HTTP ${response.status}).`);
     }
 
-    this.logger.log(`Email successfully dispatched via Resend API to ${options.to}`);
+    this.logger.log('Email successfully dispatched via Resend API.');
   }
 
   /**
@@ -261,7 +242,7 @@ export class NodemailerEmailSenderService implements EmailSender {
       html: options.html,
     });
 
-    this.logger.log(`Email successfully dispatched via SMTP to ${options.to}`);
+    this.logger.log('Email successfully dispatched via SMTP.');
   }
 
   /**

@@ -1,20 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Users,
-  CreditCard,
-  UserPlus,
   Activity,
-  ArrowRight,
-  ArrowLeft,
-  Award,
   BookOpen,
-  FileCheck2,
-  PieChart,
-  History,
-  UserCheck,
+  CheckCircle2,
+  CircleAlert,
+  KeyRound,
+  Server,
+  ShieldAlert,
+  UserRound,
+  Users,
 } from 'lucide-react';
 import { PortalPage } from '../../components/scaffold/PortalPage';
+import { useAuth } from '../../context/AuthContext';
+import { useSystemHealth } from '../../hooks/useSystemHealth';
 import { Locale, useTranslation } from '../../i18n/dictionaries';
 
 interface AdminDashboardPageProps {
@@ -22,202 +21,167 @@ interface AdminDashboardPageProps {
 }
 
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ locale }) => {
-  const { isAr } = useTranslation();
-  const ArrowIcon = isAr ? ArrowLeft : ArrowRight;
+  const { isAr, t, formatDate } = useTranslation();
+  const { user } = useAuth();
+  const healthState = useSystemHealth();
+  const displayName = (isAr ? user?.nameAr || user?.nameEn : user?.nameEn || user?.nameAr)
+    || t('admin.adminPortalStatus.profileFallback');
 
-  // 6 Verified Management Cards corresponding directly to existing App.tsx routes
-  const coreCards = [
+  const managementLinks = [
     {
-      path: `/${locale}/admin/users`,
+      href: `/${locale}/admin/users`,
+      title: t('admin.adminPortalStatus.userDirectory'),
+      description: t('admin.adminPortalStatus.userDirectoryUnavailable'),
       icon: Users,
-      titleAr: 'المستخدمون',
-      titleEn: 'Users Directory',
-      descAr: 'إدارة حسابات الطلاب وأعضاء هيئة التدريس',
-      descEn: 'Manage students, faculty, and administrative staff',
     },
     {
-      path: `/${locale}/admin/programs`,
-      icon: Award,
-      titleAr: 'البرامج الأكاديمية',
-      titleEn: 'Academic Programs',
-      descAr: 'إدارة البرامج والتخصصات والخطط الدراسية',
-      descEn: 'Manage degree curricula and department specializations',
+      href: `/${locale}/admin/roles`,
+      title: t('admin.adminPortalStatus.roleManagement'),
+      description: t('admin.adminPortalStatus.roleManagementUnavailable'),
+      icon: KeyRound,
     },
     {
-      path: `/${locale}/admin/courses`,
+      href: `/${locale}/admin/courses`,
+      title: t('admin.adminPortalStatus.academicOperations'),
+      description: t('admin.adminPortalStatus.academicOperationsUnavailable'),
       icon: BookOpen,
-      titleAr: 'الدورات والمقررات',
-      titleEn: 'Courses & Catalog',
-      descAr: 'إضافة وإدارة المقررات والشعب الأكاديمية',
-      descEn: 'Master catalog for course offerings and sections',
-    },
-    {
-      path: `/${locale}/admin/finance`,
-      icon: CreditCard,
-      titleAr: 'الشؤون المالية',
-      titleEn: 'Financial Ops',
-      descAr: 'المدفوعات، الفواتير، والسجلات المالية',
-      descEn: 'Tuition fees, student invoicing, and payment logs',
-    },
-    {
-      path: `/${locale}/admin/assessments`,
-      icon: FileCheck2,
-      titleAr: 'الاختبارات والتقييم',
-      titleEn: 'Exams & Assessment',
-      descAr: 'بنوك الأسئلة، الاختبارات، والمراقبة الإلكترونية',
-      descEn: 'Question banks, exam scheduling, and proctoring',
-    },
-    {
-      path: `/${locale}/admin/admissions`,
-      icon: UserCheck,
-      titleAr: 'القبول والتسجيل',
-      titleEn: 'Admissions & Intake',
-      descAr: 'متابعة وفرز طلبات القبول والالتحاق',
-      descEn: 'Track applicant intake and enrollment approvals',
     },
   ];
 
+  const renderDependencyStatus = (status: 'up' | 'down' | 'unconfigured' | 'degraded') => {
+    const healthy = status === 'up';
+    const label = healthy
+      ? t('admin.adminPortalStatus.statusOk')
+      : status === 'down'
+        ? t('admin.adminPortalStatus.statusDown')
+        : status === 'degraded'
+          ? t('admin.adminPortalStatus.statusDegraded')
+          : t('admin.adminPortalStatus.statusUnconfigured');
+
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${healthy ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
+        {healthy ? <CheckCircle2 size={13} /> : <CircleAlert size={13} />}
+        {label}
+      </span>
+    );
+  };
+
   return (
     <PortalPage
-      title={isAr ? 'لوحة التحكم الإدارية' : 'Admin Control Panel'}
-      subtitle={
-        isAr
-          ? 'مرحباً بك في النظام الإداري لأكاديمية نبا'
-          : 'Welcome to NABA Academy Central Administration'
-      }
+      title={isAr ? 'لوحة الإدارة' : 'Administrator Dashboard'}
+      subtitle={isAr ? 'ملخص الحساب والخدمات المتاحة' : 'Account overview and currently available services'}
       breadcrumbs={[
-        { label: isAr ? 'بوابة الإدارة' : 'Admin Portal', path: `/${locale}/admin/dashboard` },
+        { label: isAr ? 'بوابة الإدارة' : 'Administrator Portal', path: `/${locale}/admin/dashboard` },
         { label: isAr ? 'لوحة التحكم' : 'Dashboard' },
       ]}
       locale={locale}
       actions={
-        <div className="flex items-center gap-2">
-          <Link
-            to={`/${locale}/admin/users`}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#082B50] hover:bg-[#061E38] text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
-          >
-            <UserPlus size={14} className="text-[#D6A53A]" />
-            <span>{isAr ? 'إضافة مستخدم جديد' : 'New User Account'}</span>
-          </Link>
-          <Link
-            to={`/${locale}/admin/system-status`}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#EFF3F8] border border-[#DCE3EB] text-[#082B50] rounded-lg text-xs font-bold transition-colors"
-          >
-            <Activity size={14} />
-            <span>{isAr ? 'صحة النظام' : 'System Health'}</span>
-          </Link>
-        </div>
+        <Link
+          to={`/${locale}/admin/profile`}
+          className="inline-flex items-center gap-2 rounded-lg bg-[#082B50] px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#061E38]"
+        >
+          <UserRound size={15} />
+          {t('admin.adminPortalStatus.profile')}
+        </Link>
       }
     >
       <div className="space-y-6">
-        {/* Six Main Management Cards (3 columns x 2 rows) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {coreCards.map((card, idx) => {
-            const Icon = card.icon;
-            return (
+        <section className="rounded-2xl bg-[#082B50] p-6 text-white shadow-xs sm:p-8">
+          <p className="text-sm text-white/75">{t('admin.adminPortalStatus.identityDescription')}</p>
+          <h2 className="mt-2 text-2xl font-bold">{t('admin.adminPortalStatus.welcome', { name: displayName })}</h2>
+          <p className="mt-2 break-all text-sm text-white/80">{user?.email || '—'}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {user?.roles.map((role) => (
+              <span key={role.code} className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs">
+                {(isAr ? role.nameAr || role.nameEn : role.nameEn || role.nameAr) || role.code}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h3 className="mb-3 text-base font-bold text-[#082B50]">
+            {isAr ? 'الوحدات الإدارية' : 'Administration Areas'}
+          </h3>
+          <div className="grid gap-4 lg:grid-cols-3">
+            {managementLinks.map(({ href, title, description, icon: Icon }) => (
               <Link
-                key={idx}
-                to={card.path}
-                className="bg-white p-5 rounded-2xl border border-[#DCE3EB] hover:border-[#082B50]/40 hover:shadow-xs transition-all flex items-start justify-between group"
+                key={href}
+                to={href}
+                className="rounded-2xl border border-[#DCE3EB] bg-white p-5 shadow-xs transition-colors hover:border-[#082B50]/40"
               >
-                <div>
-                  <h4 className="text-sm font-bold text-[#102033] group-hover:text-[#082B50] transition-colors mb-1">
-                    {isAr ? card.titleAr : card.titleEn}
-                  </h4>
-                  <p className="text-[11px] text-[#607086] leading-relaxed max-w-[200px]">
-                    {isAr ? card.descAr : card.descEn}
-                  </p>
-                  <div className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-[#082B50] group-hover:text-[#174F89]">
-                    <span>{isAr ? 'فتح الوحدة' : 'Open Module'}</span>
-                    <ArrowIcon size={12} />
-                  </div>
+                <div className="flex items-center justify-between gap-3">
+                  <Icon size={20} className="text-[#082B50]" />
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+                    {t('common.unavailable')}
+                  </span>
                 </div>
-
-                <div className="w-12 h-12 rounded-xl bg-[#EFF3F8] text-[#082B50] group-hover:bg-[#082B50] group-hover:text-[#D6A53A] flex items-center justify-center shrink-0 transition-colors">
-                  <Icon size={22} />
-                </div>
+                <h4 className="mt-4 text-sm font-bold text-[#102033]">{title}</h4>
+                <p className="mt-2 text-xs leading-5 text-[#607086]">{description}</p>
               </Link>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        </section>
 
-        {/* Lower Split: Analytics Area & Recent Activity (Factual Empty States) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Analytics Chart Container (8 cols) */}
-          <div className="lg:col-span-8 bg-white rounded-2xl border border-[#DCE3EB] p-6 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#DCE3EB]">
+        <section className="rounded-2xl border border-[#DCE3EB] bg-white p-5 shadow-xs sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#DCE3EB] pb-4">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EFF3F8] text-[#082B50]">
+                <Server size={20} />
+              </span>
               <div>
-                <h4 className="text-sm font-bold text-[#082B50]">
-                  {isAr ? 'معدل التسجيل في البرامج الأكاديمية' : 'Program Enrollment Trends'}
-                </h4>
-                <p className="text-[11px] text-[#607086] mt-0.5">
-                  {isAr ? 'مؤشرات القبول والتسجيل الأكاديمي' : 'Academic admissions and enrollment metrics'}
+                <h3 className="text-sm font-bold text-[#102033]">{t('admin.adminPortalStatus.liveHealth')}</h3>
+                <p className="mt-1 text-xs text-[#607086]">
+                  {healthState.status === 'loaded'
+                    ? t('admin.adminPortalStatus.healthLoadedAt', { date: formatDate(healthState.health.timestamp) })
+                    : healthState.status === 'loading'
+                      ? t('common.loading')
+                      : t('admin.adminPortalStatus.loadHealthError', { message: healthState.message })}
                 </p>
               </div>
             </div>
-
-            {/* Factual Operational Empty State (Required by Strict Rule) */}
-            <div className="py-16 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#EFF3F8] text-[#082B50] flex items-center justify-center mx-auto mb-3 border border-[#DCE3EB]">
-                <PieChart size={24} />
-              </div>
-              <h5 className="text-xs font-bold text-[#102033] mb-1">
-                {isAr ? 'ستظهر الإحصاءات عند توفر البيانات التشغيلية.' : 'Statistics will appear when operational data becomes available.'}
-              </h5>
-              <p className="text-[11px] text-[#607086] max-w-sm mx-auto">
-                {isAr
-                  ? 'ستظهر الرسوم البيانية ومؤشرات التسجيل عند بدء تسجيل البيانات في النظام.'
-                  : 'Enrollment charts will populate when operational records are available in the system.'}
-              </p>
-            </div>
-
-            <div className="pt-4 border-t border-[#DCE3EB] flex items-center justify-between text-xs text-[#607086]">
-              <span>{isAr ? 'بيانات النظام المركزي' : 'Central System Data'}</span>
-              <span className="font-semibold text-[#607086]">{isAr ? 'في انتظار ربط الواجهة الخلفية' : 'Pending Backend Integration'}</span>
-            </div>
+            <Link
+              to={`/${locale}/admin/system-status`}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#082B50] underline underline-offset-4"
+            >
+              <Activity size={14} />
+              {t('admin.adminPortalStatus.systemHealth')}
+            </Link>
           </div>
 
-          {/* Side Panel: أحدث الأنشطة (4 cols) */}
-          <div className="lg:col-span-4 bg-white rounded-2xl border border-[#DCE3EB] p-6 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#DCE3EB]">
-                <h4 className="text-sm font-bold text-[#082B50]">
-                  {isAr ? 'أحدث الأنشطة والعمليات' : 'Recent Activities'}
-                </h4>
-                <Link
-                  to={`/${locale}/admin/audit`}
-                  className="text-xs font-semibold text-[#082B50] hover:text-[#174F89] flex items-center gap-1"
-                >
-                  <span>{isAr ? 'سجل التدقيق' : 'Audit Log'}</span>
-                  <ArrowIcon size={12} />
-                </Link>
+          {healthState.status === 'loaded' ? (
+            <div className="grid gap-4 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-[#607086]">{t('admin.adminPortalStatus.apiService')}</span>
+                {renderDependencyStatus(healthState.health.status === 'ok' ? 'up' : 'degraded')}
               </div>
-
-              {/* Factual Activity Empty State */}
-              <div className="py-12 text-center">
-                <div className="w-12 h-12 rounded-xl bg-[#EFF3F8] text-[#607086] flex items-center justify-center mx-auto mb-2">
-                  <History size={20} />
+              {(['database', 'redis', 'storage'] as const).map((dependency) => (
+                <div key={dependency} className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-[#607086]">{t(`admin.adminPortalStatus.${dependency}`)}</span>
+                  {renderDependencyStatus(healthState.health.dependencies[dependency])}
                 </div>
-                <h5 className="text-xs font-bold text-[#102033] mb-1">
-                  {isAr ? 'لا توجد أنشطة مسجلة حاليًا' : 'No recorded activity yet.'}
-                </h5>
-                <p className="text-[11px] text-[#607086]">
-                  {isAr ? 'ستوثق العمليات الإدارية وسجلات التدقيق هنا عند حدوثها.' : 'Administrative events and audit logs will be recorded here.'}
-                </p>
-              </div>
+              ))}
             </div>
-
-            <div className="pt-4 border-t border-[#DCE3EB]">
-              <Link
-                to={`/${locale}/admin/audit`}
-                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#EFF3F8] hover:bg-[#DCE3EB]/60 text-[#082B50] text-xs font-semibold transition-colors"
+          ) : healthState.status === 'error' ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
+              <p role="alert" className="text-xs text-rose-700">{healthState.message}</p>
+              <button
+                type="button"
+                onClick={healthState.refresh}
+                className="rounded-lg border border-[#DCE3EB] px-3 py-2 text-xs font-semibold text-[#082B50] hover:bg-[#EFF3F8]"
               >
-                <History size={13} />
-                <span>{isAr ? 'عرض سجل الرقابة والعمليات' : 'View Full Audit Trail'}</span>
-              </Link>
+                {t('admin.adminPortalStatus.retryHealth')}
+              </button>
             </div>
-          </div>
-        </div>
+          ) : null}
+        </section>
+
+        <section className="flex items-start gap-3 rounded-2xl border border-[#DCE3EB] bg-[#EFF3F8] p-5">
+          <ShieldAlert size={19} className="mt-0.5 shrink-0 text-[#082B50]" />
+          <p className="text-sm leading-6 text-[#607086]">
+            {t('admin.adminPortalStatus.academicOperationsUnavailable')}
+          </p>
+        </section>
       </div>
     </PortalPage>
   );

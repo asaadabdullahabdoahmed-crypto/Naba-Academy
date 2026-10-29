@@ -67,8 +67,9 @@ export const StudentRegistrationPage: React.FC<StudentRegistrationPageProps> = (
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              disabled
               placeholder={isAr ? 'البحث في دليل المقررات والشعب المتاحة...' : 'Search course catalog or open sections...'}
-              className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl ps-10 pe-4 py-2.5 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50] transition-colors"
+              className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl ps-10 pe-4 py-2.5 text-xs text-[#102033] disabled:cursor-not-allowed disabled:opacity-70"
             />
           </div>
         </div>
@@ -80,13 +81,13 @@ export const StudentRegistrationPage: React.FC<StudentRegistrationPageProps> = (
           </div>
 
           <h3 className="text-base md:text-lg font-bold text-[#102033] mb-2">
-            {isAr ? 'فترة التسجيل الفصلي غير متاحة حالياً' : 'Course registration period is currently closed'}
+            {isAr ? 'حالة التسجيل غير متاحة بعد' : 'Registration status is not available yet.'}
           </h3>
 
           <p className="text-xs text-[#607086] max-w-lg mx-auto mb-6 leading-relaxed">
             {isAr
-              ? 'تُتاح عمليات تسجيل المقررات وفق المواعيد الرسمية المحددة في التقويم الأكاديمي.'
-              : 'Course registration periods open in accordance with the official academic calendar.'}
+              ? 'لم يتم ربط بوابة التسجيل بالخدمة الأكاديمية؛ لا يمكن تأكيد فتح الفترة أو استقبال طلبات التسجيل.'
+              : 'The registration portal is not connected to the academic service, so it cannot confirm opening dates or accept requests.'}
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">

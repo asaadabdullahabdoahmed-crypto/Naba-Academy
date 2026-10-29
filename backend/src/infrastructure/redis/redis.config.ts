@@ -25,7 +25,7 @@ export function sanitizeRedisUrl(url?: string): string {
 
 /**
  * Builds safe RedisOptions from application ConfigService.
- * Enforces lazy connection and bounded retry strategies to avoid unhandled crashes.
+ * Enforces lazy connection and capped retry delays to avoid unhandled crashes.
  */
 export function createRedisOptions(configService: ConfigService): ResolvedRedisConfig {
   const redisConfig = configService.get<RedisConfig>('redis');
@@ -39,9 +39,6 @@ export function createRedisOptions(configService: ConfigService): ResolvedRedisC
     lazyConnect: true,
     enableOfflineQueue: false,
     retryStrategy(times: number) {
-      if (times > 3) {
-        return null; // Stop retrying after 3 attempts in disconnection loop
-      }
       return Math.min(times * 200, 1000);
     },
   };
