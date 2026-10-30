@@ -10,9 +10,13 @@ import { AcademicCatalogController } from './academic-catalog.controller';
 describe('AcademicCatalogController (HTTP contract)', () => {
   let app: INestApplication;
   const academicCatalog = {
+    listUniversities: jest.fn(),
+    getUniversity: jest.fn(),
     listColleges: jest.fn(),
+    getCollege: jest.fn(),
     listCredentialLevels: jest.fn(),
     listDepartments: jest.fn(),
+    getDepartment: jest.fn(),
     listPrograms: jest.fn(),
     getProgram: jest.fn(),
   };
@@ -52,7 +56,14 @@ describe('AcademicCatalogController (HTTP contract)', () => {
   it('returns paginated catalog reads using the standard success envelope', async () => {
     academicCatalog.listColleges.mockResolvedValue({
       data: [],
-      meta: { page: 1, pageSize: 20, total: 0 },
+      meta: {
+        page: 1,
+        pageSize: 20,
+        totalItems: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrevious: false,
+      },
     });
 
     const response = await request(app.getHttpServer())
@@ -62,7 +73,14 @@ describe('AcademicCatalogController (HTTP contract)', () => {
     expect(response.body).toEqual({
       success: true,
       data: [],
-      meta: { page: 1, pageSize: 20, total: 0 },
+      meta: {
+        page: 1,
+        pageSize: 20,
+        totalItems: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrevious: false,
+      },
     });
     expect(academicCatalog.listColleges).toHaveBeenCalledWith(
       expect.objectContaining({ page: 1, pageSize: 20 }),
@@ -81,5 +99,55 @@ describe('AcademicCatalogController (HTTP contract)', () => {
       .expect(400);
     expect(academicCatalog.listColleges).not.toHaveBeenCalled();
     expect(academicCatalog.getProgram).not.toHaveBeenCalled();
+  });
+
+  it('serves university and catalog detail routes through the response envelope', async () => {
+    const universityId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    academicCatalog.listUniversities.mockResolvedValue({
+      data: [],
+      meta: {
+        page: 1,
+        pageSize: 20,
+        totalItems: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrevious: false,
+      },
+    });
+    academicCatalog.listColleges.mockResolvedValue({
+      data: [],
+      meta: {
+        page: 1,
+        pageSize: 20,
+        totalItems: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrevious: false,
+      },
+    });
+    academicCatalog.getUniversity.mockResolvedValue({
+      id: universityId,
+      code: 'TEST',
+      nameAr: 'اختبار',
+      nameEn: 'Test',
+      status: 'active',
+    });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/academic/universities')
+      .expect(200);
+    await request(app.getHttpServer())
+      .get(`/api/v1/academic/universities/${universityId}/colleges`)
+      .expect(200);
+    const response = await request(app.getHttpServer())
+      .get(`/api/v1/academic/universities/${universityId}`)
+      .expect(200);
+
+    expect(response.body.data.id).toBe(universityId);
+    expect(academicCatalog.listUniversities).toHaveBeenCalled();
+    expect(academicCatalog.listColleges).toHaveBeenCalledWith(
+      expect.objectContaining({ universityId }),
+    );
+    expect(academicCatalog.getUniversity).toHaveBeenCalledWith(universityId);
   });
 });

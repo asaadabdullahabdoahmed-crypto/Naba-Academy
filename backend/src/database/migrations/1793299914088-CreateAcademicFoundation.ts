@@ -229,19 +229,35 @@ export class CreateAcademicFoundation1793299914088 implements MigrationInterface
       'colleges',
     ];
 
-    for (const table of tables) {
-      const [result] = (await queryRunner.query(
-        `SELECT EXISTS (SELECT 1 FROM "${table}" LIMIT 1) AS "has_data"`,
-      )) as Array<{ has_data: boolean }>;
-      if (result?.has_data) {
-        throw new Error(
-          `Refusing to drop ${table}: academic data exists. Use a reviewed forward migration instead.`,
-        );
-      }
-    }
+    const ownsTransaction = !queryRunner.isTransactionActive;
+    if (ownsTransaction) await queryRunner.startTransaction();
 
-    for (const table of tables) {
-      await queryRunner.query(`DROP TABLE "${table}"`);
+    try {
+      for (const table of tables) {
+        await queryRunner.query(`LOCK TABLE "${table}" IN ACCESS EXCLUSIVE MODE`);
+      }
+
+      for (const table of tables) {
+        const [result] = (await queryRunner.query(
+          `SELECT EXISTS (SELECT 1 FROM "${table}" LIMIT 1) AS "has_data"`,
+        )) as Array<{ has_data: boolean }>;
+        if (result?.has_data) {
+          throw new Error(
+            `Refusing to drop ${table}: academic data exists. Use a reviewed forward migration instead.`,
+          );
+        }
+      }
+
+      for (const table of tables) {
+        await queryRunner.query(`DROP TABLE "${table}"`);
+      }
+
+      if (ownsTransaction) await queryRunner.commitTransaction();
+    } catch (error) {
+      if (ownsTransaction && queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
+      throw error;
     }
   }
 }

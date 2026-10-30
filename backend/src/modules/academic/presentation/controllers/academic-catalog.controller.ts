@@ -18,9 +18,36 @@ import { AcademicCatalogQueryDto } from '../dto/academic-catalog-query.dto';
 export class AcademicCatalogController {
   constructor(private readonly academicCatalog: AcademicCatalogService) {}
 
+  @Get('universities')
+  listUniversities(@Query() query: AcademicCatalogQueryDto) {
+    return this.academicCatalog.listUniversities(query);
+  }
+
+  @Get('universities/:universityId')
+  getUniversity(
+    @Param('universityId', new ParseUUIDPipe({ version: '4' })) universityId: string,
+  ) {
+    return this.academicCatalog.getUniversity(universityId);
+  }
+
+  @Get('universities/:universityId/colleges')
+  listUniversityColleges(
+    @Param('universityId', new ParseUUIDPipe({ version: '4' })) universityId: string,
+    @Query() query: AcademicCatalogQueryDto,
+  ) {
+    return this.academicCatalog.listColleges({ ...query, universityId });
+  }
+
   @Get('colleges')
   listColleges(@Query() query: AcademicCatalogQueryDto) {
     return this.academicCatalog.listColleges(query);
+  }
+
+  @Get('colleges/:collegeId')
+  getCollege(
+    @Param('collegeId', new ParseUUIDPipe({ version: '4' })) collegeId: string,
+  ) {
+    return this.academicCatalog.getCollege(collegeId);
   }
 
   @Get('credential-levels')
@@ -42,6 +69,13 @@ export class AcademicCatalogController {
     @Query() query: AcademicCatalogQueryDto,
   ) {
     return this.academicCatalog.listPrograms(departmentId, query);
+  }
+
+  @Get('departments/:departmentId')
+  getDepartment(
+    @Param('departmentId', new ParseUUIDPipe({ version: '4' })) departmentId: string,
+  ) {
+    return this.academicCatalog.getDepartment(departmentId);
   }
 
   @Get('programs/:programId')

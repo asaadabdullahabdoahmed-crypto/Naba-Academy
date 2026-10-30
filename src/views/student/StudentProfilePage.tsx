@@ -4,6 +4,12 @@ import { PortalPage } from '../../components/scaffold/PortalPage';
 import { Locale, useTranslation } from '../../i18n/dictionaries';
 import { useAuth } from '../../context/AuthContext';
 import { ApiError, apiClient } from '../../services/apiClient';
+import type {
+  AcademicCatalogPage,
+  RecordedStudentAcademicPlacement,
+  StudentAcademicPlacement,
+} from '../../contracts/academicCatalog';
+import { academicCatalogClient } from '../../services/academicCatalogClient';
 
 interface StudentAcademicProfile {
   departmentId: string | null;
@@ -14,6 +20,11 @@ interface StudentAcademicProfile {
 }
 
 type AcademicProfileState = 'loading' | 'ready' | 'error' | 'forbidden' | 'unauthenticated';
+type PlacementState = 'disabled' | 'loading' | 'ready' | 'error' | 'forbidden' | 'unauthenticated';
+type PlacementHistoryState = 'disabled' | 'loading' | 'ready' | 'error' | 'forbidden' | 'unauthenticated';
+
+const catalogReadsEnabled = import.meta.env.VITE_ACADEMIC_CATALOG_READS_ENABLED === 'true';
+const PLACEMENT_HISTORY_PAGE_SIZE = 20;
 
 interface StudentProfilePageProps {
   locale: Locale;
@@ -26,6 +37,17 @@ export const StudentProfilePage: React.FC<StudentProfilePageProps> = ({ locale }
   const [academicProfileState, setAcademicProfileState] =
     useState<AcademicProfileState>('loading');
   const [retryCount, setRetryCount] = useState(0);
+  const [placement, setPlacement] = useState<StudentAcademicPlacement | null>(null);
+  const [placementState, setPlacementState] = useState<PlacementState>(
+    catalogReadsEnabled ? 'loading' : 'disabled',
+  );
+  const [placementRetryCount, setPlacementRetryCount] = useState(0);
+  const [placementHistory, setPlacementHistory] =
+    useState<AcademicCatalogPage<RecordedStudentAcademicPlacement> | null>(null);
+  const [placementHistoryState, setPlacementHistoryState] =
+    useState<PlacementHistoryState>(catalogReadsEnabled ? 'loading' : 'disabled');
+  const [placementHistoryPage, setPlacementHistoryPage] = useState(1);
+  const [placementHistoryRetryCount, setPlacementHistoryRetryCount] = useState(0);
 
   const notAvailable = isAr ? 'غير متوفر' : 'Not available';
 
@@ -62,6 +84,99 @@ export const StudentProfilePage: React.FC<StudentProfilePageProps> = ({ locale }
       isCurrent = false;
     };
   }, [isAuthLoading, refreshUser, retryCount, user]);
+
+  useEffect(() => {
+    if (!catalogReadsEnabled) {
+      setPlacementState('disabled');
+      setPlacement(null);
+      return;
+    }
+    if (isAuthLoading) return;
+    if (!user) {
+      setPlacementState('unauthenticated');
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+    setPlacementState('loading');
+    academicCatalogClient
+      .getMyPlacement(controller.signal)
+      .then(({ current }) => {
+        if (!active) return;
+        setPlacement(current);
+        setPlacementState('ready');
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        if (error instanceof ApiError && error.status === 401) {
+          setPlacementState('unauthenticated');
+          void refreshUser();
+          return;
+        }
+        setPlacementState(
+          error instanceof ApiError && error.status === 403 ? 'forbidden' : 'error',
+        );
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [isAuthLoading, placementRetryCount, refreshUser, user]);
+
+  useEffect(() => {
+    if (!catalogReadsEnabled) {
+      setPlacementHistory(null);
+      setPlacementHistoryState('disabled');
+      return;
+    }
+    if (isAuthLoading) return;
+    if (!user) {
+      setPlacementHistoryState('unauthenticated');
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+    setPlacementHistory(null);
+    setPlacementHistoryState('loading');
+    academicCatalogClient
+      .listMyPlacementHistory(
+        { page: placementHistoryPage, pageSize: PLACEMENT_HISTORY_PAGE_SIZE },
+        controller.signal,
+      )
+      .then((result) => {
+        if (!active) return;
+        setPlacementHistory(result);
+        setPlacementHistoryState('ready');
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        if (
+          error instanceof ApiError &&
+          (error.status === 401 || error.code === 'SESSION_REVOKED')
+        ) {
+          setPlacementHistoryState('unauthenticated');
+          void refreshUser();
+          return;
+        }
+        setPlacementHistoryState(
+          error instanceof ApiError && error.status === 403 ? 'forbidden' : 'error',
+        );
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [
+    isAuthLoading,
+    placementHistoryPage,
+    placementHistoryRetryCount,
+    refreshUser,
+    user,
+  ]);
 
   const profileName =
     (isAr ? user?.nameAr : user?.nameEn) || user?.nameAr || user?.nameEn || notAvailable;
@@ -149,6 +264,91 @@ export const StudentProfilePage: React.FC<StudentProfilePageProps> = ({ locale }
                     <span className="text-[#607086] block text-[11px]">{isAr ? 'القسم الأكاديمي' : 'Department'}</span>
                     <span className="font-bold text-[#082B50] text-sm mt-0.5 block">{department}</span>
                   </div>
+
+                  <div className="border-t border-[#DCE3EB] pt-4" aria-live="polite" aria-busy={placementState === 'loading'}>
+                    <h4 className="mb-3 text-xs font-bold text-[#102033]">
+                      {isAr ? 'التسكين الأكاديمي الموثق' : 'Verified academic placement'}
+                    </h4>
+                    {placementState === 'loading' && (
+                      <p className="flex items-center gap-2 py-3 text-xs text-[#607086]">
+                        <LoaderCircle size={15} className="animate-spin" aria-hidden="true" />
+                        {isAr ? 'جار تحميل التسكين...' : 'Loading placement...'}
+                      </p>
+                    )}
+                    {placementState === 'disabled' && (
+                      <p className="py-2 text-xs text-[#607086]" role="status">
+                        {isAr ? 'الربط بالدليل الأكاديمي غير مفعّل في هذه البيئة.' : 'Academic catalog integration is disabled in this environment.'}
+                      </p>
+                    )}
+                    {placementState === 'ready' && !placement && (
+                      <p className="py-2 text-xs text-[#607086]" role="status">
+                        {isAr ? 'لا يوجد تسكين أكاديمي موثق مرتبط بحسابك.' : 'No verified academic placement is linked to your account.'}
+                      </p>
+                    )}
+                    {placementState === 'ready' && placement && (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        {[
+                          {
+                            label: isAr ? 'الجامعة' : 'University',
+                            value: placement.program.department.college.university
+                              ? isAr
+                                ? placement.program.department.college.university.nameAr
+                                : placement.program.department.college.university.nameEn
+                              : notAvailable,
+                          },
+                          {
+                            label: isAr ? 'الكلية' : 'College',
+                            value: isAr
+                              ? placement.program.department.college.nameAr
+                              : placement.program.department.college.nameEn,
+                          },
+                          {
+                            label: isAr ? 'القسم' : 'Department',
+                            value: isAr
+                              ? placement.program.department.nameAr
+                              : placement.program.department.nameEn,
+                          },
+                          {
+                            label: isAr ? 'البرنامج' : 'Program',
+                            value: isAr ? placement.program.nameAr : placement.program.nameEn,
+                          },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="rounded-xl border border-[#DCE3EB] bg-[#F7F9FC] p-3">
+                            <span className="block text-[11px] text-[#607086]">{label}</span>
+                            <span className="mt-1 block text-sm font-bold text-[#082B50]">{value}</span>
+                          </div>
+                        ))}
+                        <p className="text-xs text-[#607086] sm:col-span-2 lg:col-span-4">
+                          {isAr ? 'تاريخ السريان: ' : 'Effective from: '}
+                          {placement.effectiveFrom}
+                          {` • ${isAr ? 'المؤهل' : 'Credential'}: `}
+                          {isAr
+                            ? placement.program.credentialLevel.nameAr
+                            : placement.program.credentialLevel.nameEn}
+                        </p>
+                      </div>
+                    )}
+                    {['error', 'forbidden', 'unauthenticated'].includes(placementState) && (
+                      <div className="flex flex-col items-start gap-2 py-2">
+                        <p className="text-xs text-[#607086]" role="status">
+                          {placementState === 'forbidden'
+                            ? isAr ? 'ليست لديك صلاحية عرض التسكين.' : 'You are not authorized to view this placement.'
+                            : placementState === 'unauthenticated'
+                              ? isAr ? 'الجلسة غير متاحة لعرض التسكين.' : 'A valid session is required to view placement.'
+                              : isAr ? 'تعذر تحميل التسكين الأكاديمي.' : 'Could not load academic placement.'}
+                        </p>
+                        {placementState === 'error' && (
+                          <button
+                            type="button"
+                            onClick={() => setPlacementRetryCount((count) => count + 1)}
+                            className="rounded-lg border border-[#DCE3EB] px-3 py-2 text-xs font-bold text-[#082B50]"
+                          >
+                            {isAr ? 'إعادة المحاولة' : 'Retry'}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#F7F9FC] border border-[#DCE3EB]">
                   <Building2 size={17} className="mt-0.5 text-[#082B50]" aria-hidden="true" />
@@ -191,6 +391,123 @@ export const StudentProfilePage: React.FC<StudentProfilePageProps> = ({ locale }
             )}
           </div>
         </div>
+
+        <section
+          className="rounded-2xl border border-[#DCE3EB] bg-white p-6 shadow-xs"
+          aria-live="polite"
+          aria-busy={placementHistoryState === 'loading'}
+        >
+          <div className="mb-4 border-b border-[#DCE3EB] pb-3">
+            <h3 className="text-sm font-bold text-[#102033]">
+              {isAr ? 'سجل التسكين الأكاديمي المسجل' : 'Recorded academic placement history'}
+            </h3>
+            <p className="mt-1 text-xs text-[#607086]">
+              {isAr
+                ? 'يعرض السجلات المسجلة كما هي، ولا يمثل اعتمادًا لتاريخ التحويلات.'
+                : 'Displays recorded rows as stored; this is not an approved transfer history.'}
+            </p>
+          </div>
+
+          {placementHistoryState === 'loading' && (
+            <p className="flex items-center gap-2 py-4 text-xs text-[#607086]" role="status">
+              <LoaderCircle size={15} className="animate-spin" aria-hidden="true" />
+              {isAr ? 'جارٍ تحميل السجل...' : 'Loading recorded history...'}
+            </p>
+          )}
+          {placementHistoryState === 'disabled' && (
+            <p className="py-2 text-xs text-[#607086]" role="status">
+              {isAr
+                ? 'قراءة السجل الأكاديمي غير مفعّلة في هذه البيئة.'
+                : 'Academic history reads are disabled in this environment.'}
+            </p>
+          )}
+          {placementHistoryState === 'ready' && placementHistory?.data.length === 0 && (
+            <p className="py-2 text-xs text-[#607086]" role="status">
+              {isAr ? 'لا توجد سجلات تسكين أكاديمي مسجلة.' : 'No recorded academic placements were found.'}
+            </p>
+          )}
+          {placementHistoryState === 'ready' && placementHistory && placementHistory.data.length > 0 && (
+            <>
+              <ol className="space-y-3">
+                {placementHistory.data.map((record) => (
+                  <li
+                    key={record.id}
+                    className="rounded-xl border border-[#DCE3EB] bg-[#F7F9FC] p-4"
+                  >
+                    <p className="text-sm font-bold text-[#082B50]">
+                      {isAr ? record.program.nameAr : record.program.nameEn}
+                    </p>
+                    <p className="mt-1 text-xs text-[#607086]">
+                      {[
+                        record.program.department.college.nameAr
+                          ? isAr
+                            ? record.program.department.college.nameAr
+                            : record.program.department.college.nameEn
+                          : null,
+                        isAr
+                          ? record.program.department.nameAr
+                          : record.program.department.nameEn,
+                      ]
+                        .filter(Boolean)
+                        .join(' • ')}
+                    </p>
+                    <p className="mt-2 text-xs text-[#607086]">
+                      {isAr ? 'السريان: ' : 'Effective: '}
+                      {record.effectiveFrom}
+                      {' – '}
+                      {record.effectiveTo ?? (isAr ? 'مستمر' : 'Ongoing')}
+                    </p>
+                    <p className="mt-1 text-[11px] text-[#607086]">
+                      {isAr ? 'تاريخ التسجيل: ' : 'Recorded at: '}
+                      {record.recordedAt}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-4 flex items-center justify-between">
+                <button
+                  type="button"
+                  disabled={!placementHistory.meta.hasPrevious}
+                  onClick={() => setPlacementHistoryPage((page) => Math.max(1, page - 1))}
+                  className="rounded-lg border border-[#DCE3EB] px-3 py-2 text-xs font-bold text-[#082B50] disabled:opacity-50"
+                >
+                  {isAr ? 'السابق' : 'Previous'}
+                </button>
+                <span className="text-xs text-[#607086]">
+                  {placementHistory.meta.page} / {placementHistory.meta.totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={!placementHistory.meta.hasNext}
+                  onClick={() => setPlacementHistoryPage((page) => page + 1)}
+                  className="rounded-lg border border-[#DCE3EB] px-3 py-2 text-xs font-bold text-[#082B50] disabled:opacity-50"
+                >
+                  {isAr ? 'التالي' : 'Next'}
+                </button>
+              </div>
+            </>
+          )}
+          {['error', 'forbidden', 'unauthenticated'].includes(placementHistoryState) && (
+            <div className="flex flex-col items-start gap-2 py-2">
+              <p className="text-xs text-[#607086]" role="status">
+                {placementHistoryState === 'forbidden'
+                  ? isAr ? 'ليست لديك صلاحية عرض سجل التسكين.' : 'You are not authorized to view placement history.'
+                  : placementHistoryState === 'unauthenticated'
+                    ? isAr ? 'الجلسة غير متاحة لعرض السجل.' : 'A valid session is required to view placement history.'
+                    : isAr ? 'تعذر تحميل سجل التسكين.' : 'Could not load recorded placement history.'}
+              </p>
+              {placementHistoryState === 'error' && (
+                <button
+                  type="button"
+                  onClick={() => setPlacementHistoryRetryCount((count) => count + 1)}
+                  className="rounded-lg border border-[#DCE3EB] px-3 py-2 text-xs font-bold text-[#082B50]"
+                >
+                  {isAr ? 'إعادة المحاولة' : 'Retry'}
+                </button>
+              )}
+            </div>
+          )}
+        </section>
 
         <div className="bg-[#F7F9FC] rounded-2xl border border-[#DCE3EB] p-5 md:p-6">
           <div className="flex items-center gap-2 pb-3 border-b border-[#DCE3EB]">

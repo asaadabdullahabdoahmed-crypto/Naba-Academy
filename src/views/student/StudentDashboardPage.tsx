@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   GraduationCap,
@@ -16,17 +16,93 @@ import {
   Headphones,
   CheckCircle2,
   Tv,
+  CircleAlert,
+  LoaderCircle,
+  RotateCw,
 } from 'lucide-react';
 import { PortalPage } from '../../components/scaffold/PortalPage';
+import { useAuth } from '../../context/AuthContext';
+import { ApiError, apiClient } from '../../services/apiClient';
 import { Locale, useTranslation } from '../../i18n/dictionaries';
 
 interface StudentDashboardPageProps {
   locale: Locale;
 }
 
+interface StudentAcademicProfile {
+  departmentId: string | null;
+  departmentAr: string | null;
+  departmentEn: string | null;
+  collegeAr: string | null;
+  collegeEn: string | null;
+}
+
+type AcademicProfileState =
+  | 'loading'
+  | 'ready'
+  | 'error'
+  | 'forbidden'
+  | 'unauthenticated';
+
 export const StudentDashboardPage: React.FC<StudentDashboardPageProps> = ({ locale }) => {
   const { isAr } = useTranslation();
+  const { user, isLoading: isAuthLoading, refreshUser } = useAuth();
   const ArrowIcon = isAr ? ArrowLeft : ArrowRight;
+  const [academicProfile, setAcademicProfile] = useState<StudentAcademicProfile | null>(null);
+  const [academicProfileState, setAcademicProfileState] =
+    useState<AcademicProfileState>('loading');
+  const [retryCount, setRetryCount] = useState(0);
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (!user) {
+      setAcademicProfileState('unauthenticated');
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+    setAcademicProfileState('loading');
+
+    apiClient
+      .get<StudentAcademicProfile>('/students/me/academic-profile', {
+        signal: controller.signal,
+      })
+      .then((profile) => {
+        if (!active) return;
+        setAcademicProfile(profile);
+        setAcademicProfileState('ready');
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        if (
+          error instanceof ApiError &&
+          (error.status === 401 || error.code === 'SESSION_REVOKED')
+        ) {
+          setAcademicProfileState('unauthenticated');
+          void refreshUser();
+          return;
+        }
+        setAcademicProfileState(
+          error instanceof ApiError && error.status === 403 ? 'forbidden' : 'error',
+        );
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [isAuthLoading, refreshUser, retryCount, user]);
+
+  const notAvailable = isAr ? 'غير متوفر' : 'Not available';
+  const department =
+    (isAr ? academicProfile?.departmentAr : academicProfile?.departmentEn) ||
+    (isAr ? academicProfile?.departmentEn : academicProfile?.departmentAr) ||
+    notAvailable;
+  const college =
+    (isAr ? academicProfile?.collegeAr : academicProfile?.collegeEn) ||
+    (isAr ? academicProfile?.collegeEn : academicProfile?.collegeAr) ||
+    notAvailable;
 
   return (
     <PortalPage
@@ -69,6 +145,80 @@ export const StudentDashboardPage: React.FC<StudentDashboardPageProps> = ({ loca
             ? 'بيانات المقررات والواجبات والجدول الأكاديمي غير متاحة بعد. هذه الحالة لا تعني عدم وجود سجلات للطالب.'
             : 'Course, assignment, and timetable data are not available yet. These placeholders do not mean that no student records exist.'}
         </div>
+
+        <section
+          className="rounded-2xl border border-[#DCE3EB] bg-white p-5 shadow-xs sm:p-6"
+          aria-live="polite"
+          aria-busy={academicProfileState === 'loading'}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#DCE3EB] pb-3">
+            <div>
+              <h3 className="text-sm font-bold text-[#102033]">
+                {isAr ? 'البيانات الأكاديمية الحالية في الحساب' : 'Academic profile on your account'}
+              </h3>
+              <p className="mt-1 text-xs text-[#607086]">
+                {isAr
+                  ? 'هذه بيانات الحساب الحالية وليست تسكينًا موحدًا معتمدًا.'
+                  : 'These are existing account fields, not a verified normalized placement.'}
+              </p>
+            </div>
+            <Link
+              to={`/${locale}/student/profile`}
+              className="text-xs font-bold text-[#082B50] underline underline-offset-4"
+            >
+              {isAr ? 'الملف الأكاديمي' : 'Academic profile'}
+            </Link>
+          </div>
+
+          {academicProfileState === 'loading' && (
+            <p className="flex items-center gap-2 py-4 text-xs text-[#607086]" role="status">
+              <LoaderCircle size={15} className="animate-spin" aria-hidden="true" />
+              {isAr ? 'جارٍ تحميل البيانات الأكاديمية...' : 'Loading academic profile...'}
+            </p>
+          )}
+          {academicProfileState === 'ready' && (
+            <dl className="grid gap-4 pt-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs text-[#607086]">{isAr ? 'الكلية' : 'College'}</dt>
+                <dd className="mt-1 text-sm font-semibold text-[#102033]">{college}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[#607086]">{isAr ? 'القسم' : 'Department'}</dt>
+                <dd className="mt-1 text-sm font-semibold text-[#102033]">{department}</dd>
+              </div>
+            </dl>
+          )}
+          {academicProfileState === 'unauthenticated' && (
+            <p className="py-4 text-xs text-[#607086]" role="status">
+              {isAr
+                ? 'الجلسة غير متاحة لعرض البيانات الأكاديمية.'
+                : 'A valid session is required to view your academic profile.'}
+            </p>
+          )}
+          {academicProfileState === 'forbidden' && (
+            <p className="py-4 text-xs text-[#607086]" role="status">
+              {isAr
+                ? 'ليست لديك صلاحية عرض هذه البيانات الأكاديمية.'
+                : 'You are not authorized to view this academic profile.'}
+            </p>
+          )}
+          {academicProfileState === 'error' && (
+            <div className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <p className="flex items-center gap-2 text-xs text-[#607086]" role="alert">
+                <CircleAlert size={15} aria-hidden="true" />
+                {isAr ? 'تعذر تحميل البيانات الأكاديمية.' : 'Could not load academic profile.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => setRetryCount((count) => count + 1)}
+                className="inline-flex items-center gap-2 rounded-lg border border-[#DCE3EB] px-3 py-2 text-xs font-bold text-[#082B50] hover:bg-[#EFF3F8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#082B50]"
+              >
+                <RotateCw size={14} aria-hidden="true" />
+                {isAr ? 'إعادة المحاولة' : 'Retry'}
+              </button>
+            </div>
+          )}
+        </section>
 
         {/* Top Section: دوراتي الحالية (Current Courses) */}
         <div className="bg-white rounded-2xl border border-[#DCE3EB] p-6 shadow-xs">

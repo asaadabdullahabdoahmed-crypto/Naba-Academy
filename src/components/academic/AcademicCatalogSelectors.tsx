@@ -7,8 +7,10 @@ import type {
 } from '../../contracts/academicCatalog';
 import { ApiError } from '../../services/apiClient';
 import { academicCatalogClient } from '../../services/academicCatalogClient';
+import { UniversitySelector } from './UniversitySelector';
 
 export interface AcademicCatalogSelection {
+  universityId: string | null;
   collegeId: string | null;
   departmentId: string | null;
   programId: string | null;
@@ -59,11 +61,18 @@ export const AcademicCatalogSelectors: React.FC<AcademicCatalogSelectorsProps> =
     setCollegeTotal(0);
     setCollegeState('loading');
     academicCatalogClient
-      .listColleges({ page: 1, pageSize: 100 }, controller.signal)
+      .listColleges(
+        {
+          page: 1,
+          pageSize: 100,
+          universityId: value.universityId ?? undefined,
+        },
+        controller.signal,
+      )
       .then(({ data, meta }) => {
         if (!active) return;
         setColleges(data);
-        setCollegeTotal(meta.total);
+        setCollegeTotal(meta.totalItems);
         setCollegeState('ready');
       })
       .catch((error: unknown) => {
@@ -74,7 +83,7 @@ export const AcademicCatalogSelectors: React.FC<AcademicCatalogSelectorsProps> =
       controller.abort();
       moreController.current?.abort();
     };
-  }, [enabled, retryCount]);
+  }, [enabled, retryCount, value.universityId]);
 
   useEffect(() => {
     setDepartments([]);
@@ -92,7 +101,7 @@ export const AcademicCatalogSelectors: React.FC<AcademicCatalogSelectorsProps> =
       .then(({ data, meta }) => {
         if (!active) return;
         setDepartments(data);
-        setDepartmentTotal(meta.total);
+        setDepartmentTotal(meta.totalItems);
         setDepartmentState('ready');
       })
       .catch((error: unknown) => {
@@ -117,7 +126,7 @@ export const AcademicCatalogSelectors: React.FC<AcademicCatalogSelectorsProps> =
       .then(({ data, meta }) => {
         if (!active) return;
         setPrograms(data);
-        setProgramTotal(meta.total);
+        setProgramTotal(meta.totalItems);
         setProgramState('ready');
       })
       .catch((error: unknown) => {
@@ -141,6 +150,7 @@ export const AcademicCatalogSelectors: React.FC<AcademicCatalogSelectorsProps> =
         const { data } = await academicCatalogClient.listColleges({
           page: Math.floor(colleges.length / 100) + 1,
           pageSize: 100,
+          universityId: value.universityId ?? undefined,
         }, controller.signal);
         if (controller.signal.aborted) return;
         setColleges((current) => [...current, ...data]);
@@ -205,12 +215,27 @@ export const AcademicCatalogSelectors: React.FC<AcademicCatalogSelectorsProps> =
 
   return (
     <fieldset
-      className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
       aria-busy={[collegeState, departmentState, programState].includes('loading')}
     >
       <legend className="sr-only">
-        {isAr ? 'اختيار الكلية والقسم والبرنامج' : 'Select college, department, and program'}
+        {isAr
+          ? 'اختيار الجامعة والكلية والقسم والبرنامج'
+          : 'Select university, college, department, and program'}
       </legend>
+      <UniversitySelector
+        value={value.universityId ?? ''}
+        onChange={(universityId) =>
+          onChange({
+            ...value,
+            universityId: universityId || null,
+            collegeId: null,
+            departmentId: null,
+            programId: null,
+          })
+        }
+        enabled={enabled}
+      />
       <div className="space-y-2">
         <label className="space-y-1.5 text-sm font-medium text-[#102033]">
         <span>{isAr ? 'الكلية' : 'College'}</span>
@@ -219,6 +244,7 @@ export const AcademicCatalogSelectors: React.FC<AcademicCatalogSelectorsProps> =
           disabled={collegeState !== 'ready'}
           onChange={(event) =>
             onChange({
+              ...value,
               collegeId: event.target.value || null,
               departmentId: null,
               programId: null,
@@ -340,7 +366,7 @@ export const AcademicCatalogSelectors: React.FC<AcademicCatalogSelectorsProps> =
           </button>
         )}
       </div>
-      <p className="text-xs text-[#607086] sm:col-span-3">
+      <p className="text-xs text-[#607086] sm:col-span-2 lg:col-span-4">
         {isAr
           ? 'اختيارات العرض فقط؛ لا يتم حفظ أي تغيير.'
           : 'Selection only; no changes are saved.'}
@@ -349,13 +375,13 @@ export const AcademicCatalogSelectors: React.FC<AcademicCatalogSelectorsProps> =
         <button
           type="button"
           onClick={() => setRetryCount((count) => count + 1)}
-          className="justify-self-start rounded-lg border border-[#DCE3EB] px-3 py-2 text-xs font-bold text-[#082B50] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#082B50] sm:col-span-3"
+          className="justify-self-start rounded-lg border border-[#DCE3EB] px-3 py-2 text-xs font-bold text-[#082B50] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#082B50] sm:col-span-2 lg:col-span-4"
         >
           {isAr ? 'إعادة المحاولة' : 'Retry loading'}
         </button>
       )}
       {moreError && (
-        <p role="status" className="text-sm text-[#607086] sm:col-span-3">
+        <p role="status" className="text-sm text-[#607086] sm:col-span-2 lg:col-span-4">
           {failed}
         </p>
       )}

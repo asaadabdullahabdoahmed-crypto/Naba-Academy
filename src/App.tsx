@@ -108,6 +108,7 @@ import { AdminUsersPage } from './views/admin/AdminUsersPage';
 import { AdminUserDetailPage } from './views/admin/AdminUserDetailPage';
 import { AdminSystemHealthPage } from './views/admin/AdminSystemHealthPage';
 import { AdminProfilePage } from './views/admin/AdminProfilePage';
+import { AdminAcademicStructurePage } from './views/admin/AdminAcademicStructurePage';
 
 // Alumni views
 import { AlumniDashboardPage } from './views/alumni/AlumniDashboardPage';
@@ -312,12 +313,12 @@ export default function App() {
                     <Route path="admin/users/:userId" element={<AdminUserDetailPage locale={loc} />} />
                     <Route path="admin/roles" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                     <Route path="admin/students" element={<AdminUsersPage locale={loc} />} />
-                    <Route path="admin/programs" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/programs" element={<AdminAcademicStructurePage locale={loc} />} />
                     <Route path="admin/curricula" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                     <Route path="admin/courses" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                     <Route path="admin/terms" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                     <Route path="admin/library" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
-                    <Route path="admin/departments" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/departments" element={<AdminAcademicStructurePage locale={loc} />} />
                     <Route path="admin/admissions" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                     <Route path="admin/registration" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                     <Route path="admin/finance" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, LessThanOrEqual, Repository } from 'typeorm';
 import { Request } from 'express';
 import { CanonicalRoleCode } from '../../domain/identity.types';
 import { UserRoleAssignmentEntity } from '../../infrastructure/persistence/entities/user-role-assignment.entity';
@@ -48,6 +48,7 @@ export class RolesGuard implements CanActivate {
       where: {
         userId,
         revokedAt: IsNull(),
+        assignedAt: LessThanOrEqual(new Date()),
       },
       relations: ['role'],
     });

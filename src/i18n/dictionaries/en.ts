@@ -249,7 +249,7 @@ export const en: Dictionary = {
       programs: 'Programs & Faculties',
       curricula: 'Study Curricula',
       courses: 'Master Course Catalog',
-      departments: 'Academic Departments',
+      departments: 'Academic Structure',
       admissions: 'Admissions Management',
       finance: 'Central Finance',
       reports: 'Comprehensive Reports',

@@ -45,8 +45,27 @@ abstract class TimestampedCatalogEntity {
 
 @Entity('colleges')
 @Index('uq_colleges_code_ci', { synchronize: false })
+@Index('idx_colleges_university_id', { synchronize: false })
 @Check(`"status" IN ('active', 'inactive')`)
-export class CollegeEntity extends TimestampedCatalogEntity {}
+export class CollegeEntity extends TimestampedCatalogEntity {
+  @Column({ type: 'uuid', nullable: true, name: 'university_id' })
+  universityId!: string | null;
+
+  @ManyToOne(() => UniversityEntity, (university) => university.colleges, {
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'university_id' })
+  university!: UniversityEntity | null;
+}
+
+@Entity('universities')
+@Index('uq_universities_code_ci', { synchronize: false })
+@Check(`"status" IN ('active', 'inactive')`)
+export class UniversityEntity extends TimestampedCatalogEntity {
+  @OneToMany(() => CollegeEntity, (college) => college.university)
+  colleges!: CollegeEntity[];
+}
 
 @Entity('departments')
 @Index('uq_departments_college_code_ci', { synchronize: false })
@@ -270,6 +289,7 @@ export class CourseOfferingEntity {
 }
 
 export const ACADEMIC_ENTITIES = [
+  UniversityEntity,
   CollegeEntity,
   DepartmentEntity,
   CredentialLevelEntity,

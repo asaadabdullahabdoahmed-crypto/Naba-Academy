@@ -166,6 +166,19 @@ export async function apiRequest<T = unknown>(
     ) {
       setCsrfToken(responseData.csrfToken);
     }
+    const responseMeta =
+      'meta' in data && data.meta && typeof data.meta === 'object'
+        ? data.meta as Record<string, unknown>
+        : null;
+    if (
+      Array.isArray(responseData) &&
+      responseMeta &&
+      typeof responseMeta.page === 'number' &&
+      typeof responseMeta.pageSize === 'number' &&
+      typeof responseMeta.totalItems === 'number'
+    ) {
+      return { data: responseData, meta: responseMeta } as T;
+    }
     return responseData as T;
   }
 
