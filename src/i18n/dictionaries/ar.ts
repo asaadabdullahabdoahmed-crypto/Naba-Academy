@@ -196,7 +196,8 @@ export const ar = {
     },
     instructor: {
       dashboard: 'لوحة التحكم',
-      courses: 'المقررات المكلفة',
+      courses: 'دليل المقررات',
+      terms: 'الفصول الدراسية',
       sections: 'الشعب الدراسية',
       students: 'قوائم الطلاب',
       assignments: 'الواجبات والتصحيح',

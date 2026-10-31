@@ -1,7 +1,35 @@
 # Academic Management Phase Checkpoint
 
-**Checkpoint date:** 2026-10-30
-**Acceptance status: INCOMPLETE.** The provisional university → college → department → program read hierarchy, student current-placement display, admin read-only catalog browser, and isolated verification are implemented. Full management writes, complete placement history/audit, teacher assignment scope, and unresolved institutional policies are not implemented. Target schema approval and rollout remain blocked. No Neon or shared/live database operation was performed.
+**Latest checkpoint date:** 2026-10-31 (Asia/Aden)
+**Source baseline:** `backup/naba-mvp-20261030` at `55671136c894786dd000c29068ffb85560e77016`
+**Acceptance status: INCOMPLETE.** Batch 2 now adds disabled, read-only Admin/Teacher course, term, and offering reference APIs/UI. Full teaching assignments, private academic workflows and management writes remain unavailable. See the current Batch 2 entry below; dated October 30 entries are historical snapshots.
+
+**Previous checkpoint summary:** The provisional university → college → department → program read hierarchy, student current-placement display, admin read-only catalog browser, and isolated verification are implemented. Full management writes, complete placement history/audit, teacher assignment scope, and unresolved institutional policies are not implemented. Target schema approval and rollout remain blocked. No Neon or shared/live database operation was performed.
+
+## Batch 2 review and safe local checkpoint — 2026-10-31
+
+- Verified all 27 files against the exact `MVP_BATCH_2_REPORT.md` manifest; implementation source is unchanged during this review. The report and this checkpoint record the new review evidence.
+- Reviewed tracked additions/removals and all new API/UI/test source for accidental changes, credentials and authorization regressions. No blocking finding or suspected credential was found; focused credential-pattern scan returned no matches.
+- Existing academic authorization/ownership services, student self-read implementation, session/role guards, frontend portal guard, migrations, configuration, false flag defaults and package manifests/locks match baseline `5567113` byte-for-byte.
+- Fresh runs passed: frontend 7 files / 35 tests, portal role access 3 tests, backend 7 suites / 46 tests, both type-checks and builds, offline TypeORM metadata/course-query generation and diff whitespace checks. The existing large-chunk warning and Node 24 versus declared Node 22 verification limit remain.
+- PostgreSQL/Docker are unavailable; real database execution, browser/session/device behavior and production readiness remain unverified. No flags were enabled and no production service or migration was accessed.
+- The containing commit preserves this reviewed 27-file set as the user-authorized local development checkpoint on `backup/naba-mvp-20261030`, with parent `5567113`. Its hash is available from `git log -1 --format=%H` in this checkpoint checkout. No push, merge, deployment or Batch 3 work is authorized or performed.
+- Detailed scope, evidence and remaining blockers: `MVP_BATCH_2_REPORT.md` (review section).
+
+## MVP Batch 2 — Admin and Teacher Functional Foundation
+
+- Implemented against verified backup HEAD `5567113` in a separate clean local checkout; the user confirmed Cloud Shell academic source is committed/pushed. Cloud Shell itself was not accessed or changed. Its `backend/dump.rdb` and unrelated `status --short` file remain outside this checkout.
+- Reused existing React portal layouts, authentication, API envelope/client, NestJS session/role guards, TypeORM academic entities and disabled catalog gates. Existing completed hierarchy/profile/history APIs were not rebuilt.
+- Added five **reference-only** GET contracts: course list/detail, course offerings, term list/detail. Admin/department-head/instructor access uses validated sessions and active canonical role assignments; anonymous, student and unrelated roles are denied. No private data or teacher assignment is inferred from catalog visibility.
+- Admin has searchable paginated courses, department filtering, course hierarchy details, offering references, and term browsing. Teacher has the same shared catalog reference workflow under Teacher routes with explicit assignment/roster boundaries. Course labels no longer claim assigned courses. Arabic/English rendering and server-provided dates/status are supported.
+- Request handling distinguishes loading, successful empty results, disabled backend/frontend, forbidden, expired session, missing record and retryable error. Aborted/obsolete responses cannot replace current filters/pages. No academic request is issued while the frontend gate is off.
+- New endpoints read the **existing** provisional entities only; no entity/schema/migration changes or seeds. Both gates remain false by default and no environment was enabled. Management writes, sections, assignment, roster and grading remain blocked by the existing policy boundary.
+- Verification: frontend **7 files / 35 tests passed**; portal access **3 tests passed**; focused backend **7 suites / 46 tests passed**. Both type-checks and production builds passed; Vite retains the large-chunk warning. Offline TypeORM metadata/SQL generation passed (18 entities, no initialized connection). `git diff --check` passed.
+- The HTTP suite uses real session and role guard classes with mocked session validation and role repositories. Service tests use repository/query-builder doubles; frontend tests use client/fetch doubles. These results are not a real-database, full-session, browser/device or deployment verification. PostgreSQL/Docker are unavailable in this execution environment; no database integration test or migration was run.
+- Node `24.22.1` was available; the declared project target remains Node 22. Lockfile dependencies were installed with lifecycle scripts disabled. No manifests/lockfiles/dependencies were changed.
+- At implementation completion, no production Neon/Render contact, migrations, feature enablement, commits, pushes, merges or deployments had occurred; HEAD was `5567113` and edits were uncommitted. The subsequent review/checkpoint entry above supersedes this historical Git state.
+- Next: decide and model authoritative sections/teacher assignments plus explicit scoped permission grants and assignment lifecycle, then verify against disposable PostgreSQL before enabling any private teacher/admin workflow. No global-admin scope bypass is introduced.
+- Full endpoint contracts, verification commands, source manifest and blockers: `MVP_BATCH_2_REPORT.md`.
 
 ## Recorded student placement history — 2026-10-30
 

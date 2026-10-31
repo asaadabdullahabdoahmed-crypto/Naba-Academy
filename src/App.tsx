@@ -81,6 +81,7 @@ import { StudentSettingsPage } from './views/student/StudentSettingsPage';
 
 // Instructor views
 import { InstructorDashboardPage } from './views/instructor/InstructorDashboardPage';
+import { InstructorCourseDetailPage } from './views/instructor/InstructorCourseDetailPage';
 import { InstructorCoursesPage } from './views/instructor/InstructorCoursesPage';
 import { InstructorProfilePage } from './views/instructor/InstructorProfilePage';
 import { PortalWorkflowUnavailablePage } from './views/shared/PortalWorkflowUnavailablePage';
@@ -103,6 +104,7 @@ import { DepartmentProfilePage } from './views/department/DepartmentProfilePage'
 import { DepartmentSettingsPage } from './views/department/DepartmentSettingsPage';
 
 // Admin views
+import { AdminCoursesPage } from './views/admin/AdminCoursesPage';
 import { AdminDashboardPage } from './views/admin/AdminDashboardPage';
 import { AdminUsersPage } from './views/admin/AdminUsersPage';
 import { AdminUserDetailPage } from './views/admin/AdminUserDetailPage';
@@ -251,7 +253,8 @@ export default function App() {
                   <Route element={<PortalLayout locale={loc} portalKey="instructor" />}>
                     <Route path="instructor/dashboard" element={<InstructorDashboardPage locale={loc} />} />
                     <Route path="instructor/courses" element={<InstructorCoursesPage locale={loc} />} />
-                    <Route path="instructor/courses/:courseId" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
+                    <Route path="instructor/courses/:courseId" element={<InstructorCourseDetailPage locale={loc} />} />
+                    <Route path="instructor/terms" element={<InstructorCoursesPage locale={loc} />} />
                     <Route path="instructor/courses/:courseId/students" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
                     <Route path="instructor/courses/:courseId/lectures" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
                     <Route path="instructor/courses/:courseId/assignments" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="instructor" />} />
@@ -315,8 +318,9 @@ export default function App() {
                     <Route path="admin/students" element={<AdminUsersPage locale={loc} />} />
                     <Route path="admin/programs" element={<AdminAcademicStructurePage locale={loc} />} />
                     <Route path="admin/curricula" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
-                    <Route path="admin/courses" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
-                    <Route path="admin/terms" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
+                    <Route path="admin/courses" element={<AdminCoursesPage locale={loc} />} />
+                    <Route path="admin/courses/:courseId" element={<AdminCoursesPage locale={loc} />} />
+                    <Route path="admin/terms" element={<AdminCoursesPage locale={loc} />} />
                     <Route path="admin/library" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />
                     <Route path="admin/departments" element={<AdminAcademicStructurePage locale={loc} />} />
                     <Route path="admin/admissions" element={<PortalWorkflowUnavailablePage locale={loc} portalKey="admin" />} />

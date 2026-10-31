@@ -71,7 +71,8 @@ export const PORTAL_CONFIGS: Record<string, PortalConfig> = {
     badgeEn: 'Course Faculty',
     items: [
       { id: 'inst-dash', path: '/instructor/dashboard', titleKey: 'navigation.instructor.dashboard', titleAr: 'لوحة التحكم', titleEn: 'Dashboard', icon: 'LayoutDashboard' },
-      { id: 'inst-courses', path: '/instructor/courses', titleKey: 'navigation.instructor.courses', titleAr: 'المقررات المكلفة', titleEn: 'My Courses', icon: 'BookOpen', availability: 'pending' },
+      { id: 'inst-courses', path: '/instructor/courses', titleKey: 'navigation.instructor.courses', titleAr: 'دليل المقررات', titleEn: 'Course Catalog', icon: 'BookOpen', availability: 'pending' },
+      { id: 'inst-terms', path: '/instructor/terms', titleKey: 'navigation.instructor.terms', titleAr: 'الفصول الدراسية', titleEn: 'Academic Terms', icon: 'CalendarRange', availability: 'pending' },
       { id: 'inst-sections', path: '/instructor/sections', titleKey: 'navigation.instructor.sections', titleAr: 'الشعب الدراسية', titleEn: 'Sections', icon: 'Layers', availability: 'pending' },
       { id: 'inst-students', path: '/instructor/students', titleKey: 'navigation.instructor.students', titleAr: 'قوائم الطلاب', titleEn: 'Students', icon: 'Users', availability: 'pending' },
       { id: 'inst-assign', path: '/instructor/assignments', titleKey: 'navigation.instructor.assignments', titleAr: 'الواجبات والتصحيح', titleEn: 'Assignments', icon: 'ClipboardCheck', availability: 'pending' },

@@ -18,4 +18,15 @@ describe('academic structure route integration', () => {
       titleEn: 'Academic Structure',
     });
   });
+
+  it('labels teacher courses as reference data and exposes the term browser without enabling restricted workflows', () => {
+    expect(PORTAL_CONFIGS.instructor.items.find((item) => item.path === '/instructor/courses'))
+      .toMatchObject({ titleEn: 'Course Catalog', availability: 'pending' });
+    expect(PORTAL_CONFIGS.instructor.items.find((item) => item.path === '/instructor/terms'))
+      .toMatchObject({ titleEn: 'Academic Terms', availability: 'pending' });
+    expect(CANONICAL_ROUTES.find((route) => route.path === '/instructor/terms'))
+      .toMatchObject({ area: 'INSTRUCTOR', titleEn: 'Academic Terms' });
+    expect(PORTAL_CONFIGS.instructor.items.find((item) => item.path === '/instructor/students'))
+      .toMatchObject({ availability: 'pending' });
+  });
 });

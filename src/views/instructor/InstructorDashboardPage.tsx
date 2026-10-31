@@ -85,7 +85,7 @@ export const InstructorDashboardPage: React.FC<InstructorDashboardPageProps> = (
               to={`/${locale}/instructor/courses`}
               className="text-xs font-semibold text-[#082B50] underline underline-offset-4"
             >
-              {isAr ? 'تفاصيل التوفر' : 'Availability details'}
+              {isAr ? 'استعراض دليل المقررات' : 'Browse course catalog'}
             </Link>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
