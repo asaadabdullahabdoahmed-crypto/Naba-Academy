@@ -67,7 +67,7 @@ describe('AcademicAuthorizationService', () => {
     expect(roleAssignments.find).not.toHaveBeenCalled();
   });
 
-  it('denies self-access without an active global student assignment', async () => {
+  it('denies self-access without an active student assignment', async () => {
     roleAssignments.find.mockResolvedValue([
       {
         role: { code: 'student' },
@@ -75,16 +75,6 @@ describe('AcademicAuthorizationService', () => {
         scopeId: null,
       } as UserRoleAssignmentEntity,
     ]);
-    departments.findOne.mockResolvedValue({
-      status: 'active',
-      deletedAt: null,
-      college: {
-        status: 'active',
-        deletedAt: null,
-        universityId: null,
-      },
-    } as DepartmentEntity);
-
     await expect(
       authorization.assertStudentOwns(principal, 'another-student'),
     ).rejects.toThrow(ForbiddenException);
@@ -122,6 +112,25 @@ describe('AcademicAuthorizationService', () => {
         relations: ['role'],
       }),
     );
+  });
+
+  it('allows a legitimately scoped student assignment to read only its owner record', async () => {
+    roleAssignments.find.mockResolvedValue([
+      {
+        role: { code: 'student' },
+        scopeType: 'department',
+        scopeId: 'department-1',
+      } as UserRoleAssignmentEntity,
+    ]);
+
+    await expect(
+      authorization.assertStudentOwns(principal, principal.id),
+    ).resolves.toBeUndefined();
+    await expect(
+      authorization.assertStudentOwns(principal, 'another-student'),
+    ).rejects.toThrow(ForbiddenException);
+    expect(roleAssignments.find).toHaveBeenCalledTimes(1);
+    expect(departments.findOne).not.toHaveBeenCalled();
   });
 
   it('denies missing role assignments and does not grant global scope implicitly', async () => {

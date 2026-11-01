@@ -71,10 +71,36 @@ describe('AcademicCatalogService', () => {
   it('keeps catalog access disabled until explicitly enabled', async () => {
     jest.mocked(configService.get).mockReturnValue(false);
 
-    await expect(service.listColleges(new AcademicCatalogQueryDto())).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
-    expect(colleges.createQueryBuilder).not.toHaveBeenCalled();
+    const query = new AcademicCatalogQueryDto();
+    const requests = [
+      () => service.listUniversities(query),
+      () => service.getUniversity('university-id'),
+      () => service.listColleges(query),
+      () => service.getCollege('college-id'),
+      () => service.getDepartment('department-id'),
+      () => service.listCredentialLevels(query),
+      () => service.listDepartments('college-id', query),
+      () => service.listPrograms('department-id', query),
+      () => service.getProgram('program-id'),
+      () => service.getCurrentPlacement('student-id'),
+      () => service.listMyPlacementHistory('student-id', query),
+    ];
+
+    for (const request of requests) {
+      await expect(request()).rejects.toBeInstanceOf(ServiceUnavailableException);
+    }
+
+    for (const repository of [
+      colleges,
+      departments,
+      programs,
+      credentialLevels,
+      universities,
+      placements,
+    ]) {
+      expect(repository.createQueryBuilder).not.toHaveBeenCalled();
+      if ('findOne' in repository) expect(repository.findOne).not.toHaveBeenCalled();
+    }
   });
 
   it('fails closed for normalized student placements when the catalog is disabled', async () => {

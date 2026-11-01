@@ -52,13 +52,10 @@ export class AcademicAuthorizationService {
     }
 
     const assignments = await this.activeAssignments(principal.id);
-    const hasStudentSelfRole = assignments.some(
-      (assignment) =>
-        assignment.role?.code === 'student' &&
-        assignment.scopeType === 'global' &&
-        assignment.scopeId === null,
+    const hasStudentRole = assignments.some(
+      (assignment) => assignment.role?.code === 'student',
     );
-    if (!hasStudentSelfRole) {
+    if (!hasStudentRole) {
       throw new ForbiddenException('An active student role assignment is required');
     }
   }

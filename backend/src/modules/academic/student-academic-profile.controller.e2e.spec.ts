@@ -17,6 +17,7 @@ import {
 import { AcademicAuthorizationService } from './application/academic-authorization.service';
 import { AcademicCatalogService } from './application/academic-catalog.service';
 import { StudentAcademicProfileController } from './student-academic-profile.controller';
+import { SessionRevokedException } from '../identity/domain/identity.errors';
 
 describe('StudentAcademicProfileController (HTTP authorization)', () => {
   let app: INestApplication;
@@ -145,6 +146,17 @@ describe('StudentAcademicProfileController (HTTP authorization)', () => {
     expect(response.text).not.toContain('Confidential Other Student Department');
   });
 
+  it('rejects existing accounts with no active role assignment', async () => {
+    roleAssignments.find.mockResolvedValue([]);
+
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/students/me/academic-profile')
+      .set('Cookie', 'naba_session=valid-session-token')
+      .expect(403);
+
+    expect(response.text).not.toContain('Authenticated Department');
+  });
+
   it('allows an active student to read their own academic profile', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/v1/students/me/academic-profile')
@@ -158,6 +170,43 @@ describe('StudentAcademicProfileController (HTTP authorization)', () => {
       collegeAr: 'الكلية المصادق عليها',
       collegeEn: 'Authenticated College',
     });
+  });
+
+  it('preserves profile access for an active student with a scoped assignment', async () => {
+    roleAssignments.find.mockResolvedValue([
+      {
+        roleId: 'student-role',
+        role: { code: 'student' },
+        scopeType: 'department',
+        scopeId: 'department-1',
+      } as UserRoleAssignmentEntity,
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/students/me/academic-profile')
+      .set('Cookie', 'naba_session=valid-session-token')
+      .expect(200);
+
+    expect(response.body.data.departmentEn).toBe('Authenticated Department');
+    expect(roleAssignments.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ userId: authenticatedUserId }),
+      }),
+    );
+  });
+
+  it('rejects a revoked session before checking roles or returning profile data', async () => {
+    sessionService.validateSession.mockRejectedValue(
+      new SessionRevokedException('Session revoked'),
+    );
+
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/students/me/academic-profile')
+      .set('Cookie', 'naba_session=revoked-session-token')
+      .expect(403);
+
+    expect(roleAssignments.find).not.toHaveBeenCalled();
+    expect(response.text).not.toContain('Authenticated Department');
   });
 
   it('ignores a forged userId in query parameters and headers', async () => {

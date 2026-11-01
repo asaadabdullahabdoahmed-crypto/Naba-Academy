@@ -16,6 +16,26 @@
 - The containing commit preserves this reviewed 27-file set as the user-authorized local development checkpoint on `backup/naba-mvp-20261030`, with parent `5567113`. Its hash is available from `git log -1 --format=%H` in this checkpoint checkout. No push, merge, deployment or Batch 3 work is authorized or performed.
 - Detailed scope, evidence and remaining blockers: `MVP_BATCH_2_REPORT.md` (review section).
 
+## Production compatibility continuation — 2026-11-01
+
+- Resumed from commit `3fadceed7399a526a11853fbc2ace0d48b5a27e3` on `backup/naba-mvp-20261030`; reviewed the existing uncommitted changes before continuing. The student self-read policy now accepts any active student role assignment (global or scoped), but still requires an active verified principal and exact owner match. HTTP regressions cover scoped students, missing roles, revoked sessions, and no disclosure. No role, permission, scope inheritance, or cross-student access was added.
+- Backend catalog and teaching-catalog services check the backend flag before repository query construction; the frontend checks its flag by exact `true`. Configuration defaults the backend flag to false and rejects invalid boolean values. Tests cover all 11 academic-catalog read methods without repository access when disabled; teaching-catalog tests cover the corresponding short-circuit.
+- PostgreSQL 16.15 integration with synthetic fixtures passed on a disposable loopback-only database (`naba_academic_test`, port 55439). TypeORM migrations/repository reads exercised by the integration test completed, and the database was empty after cleanup. A Node 22.23.4 Nest startup smoke test against the same disposable PostgreSQL and Redis returned health `ok`; the database remained empty, consistent with `synchronize=false` and `dropSchema=false`. All temporary containers were stopped and removed.
+- Node 22.23.4 verification passed: backend lint/type-check and build; 11 backend suites / 79 tests, including integration and configuration checks; frontend lint/type-check, build, and 7 files / 35 tests. The frontend build retains the existing large-chunk advisory. `git diff --check` passed. An initial test invocation from the repository root passed Jest's `--runInBand` option to Vitest and failed before tests ran; rerunning the applicable commands from `backend/` passed.
+- Updated the authorization and production-readiness descriptions to match scoped student assignments. Save the verified compatibility changes as one local commit. Preserve unrelated untracked `backend/dump.rdb` and `tatus --short`; do not include either in that commit.
+
+### Remaining commit and release gates
+
+| Gate | Required before proceeding |
+|---|---|
+| Compatibility change commit | Commit only the intended authorization, tests, configuration test, and checkpoint/readiness documentation. Keep `backend/dump.rdb` and `tatus --short` out of the index. Do not push this local checkpoint. |
+| Institutional/schema approval | Record the existing domain decisions; resolve placement interval overlap, code reuse and catalog lifecycle, academic audit requirements, section/enrollment/teacher-assignment boundaries, and missing assessment/grade workflows. The current schema remains provisional and is not a complete academic management schema. |
+| Target database preflight | No production schema, migration history, extensions, grants, existing data compatibility, backup/restore, or lock behavior was inspected. Require owner/DBA review and a production-like isolated rehearsal before any target change. Do not contact Neon or run a production migration as part of this checkpoint. |
+| Release/deployment approval | Render settings, auto-deploy behavior, deployment health/rollback configuration, and production environment values were not inspected. Verify them only through an explicitly approved non-production process; preserve both academic flags as off until schema, data, authorization, and release approvals are complete. |
+| User-facing acceptance | Real browser/device/session UX, production-scale search/pagination plans, operational monitoring, and post-deploy verification remain untested. The local Nest health check is not deployment acceptance. |
+
+No Neon/Render access, production migration, flag enablement, push, merge, or deployment occurred. Batch 3 was not started.
+
 ## MVP Batch 2 — Admin and Teacher Functional Foundation
 
 - Implemented against verified backup HEAD `5567113` in a separate clean local checkout; the user confirmed Cloud Shell academic source is committed/pushed. Cloud Shell itself was not accessed or changed. Its `backend/dump.rdb` and unrelated `status --short` file remain outside this checkout.
