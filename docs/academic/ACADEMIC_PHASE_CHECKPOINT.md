@@ -22,19 +22,25 @@
 - Backend catalog and teaching-catalog services check the backend flag before repository query construction; the frontend checks its flag by exact `true`. Configuration defaults the backend flag to false and rejects invalid boolean values. Tests cover all 11 academic-catalog read methods without repository access when disabled; teaching-catalog tests cover the corresponding short-circuit.
 - PostgreSQL 16.15 integration with synthetic fixtures passed on a disposable loopback-only database (`naba_academic_test`, port 55439). TypeORM migrations/repository reads exercised by the integration test completed, and the database was empty after cleanup. A Node 22.23.4 Nest startup smoke test against the same disposable PostgreSQL and Redis returned health `ok`; the database remained empty, consistent with `synchronize=false` and `dropSchema=false`. All temporary containers were stopped and removed.
 - Node 22.23.4 verification passed: backend lint/type-check and build; 11 backend suites / 79 tests, including integration and configuration checks; frontend lint/type-check, build, and 7 files / 35 tests. The frontend build retains the existing large-chunk advisory. `git diff --check` passed. An initial test invocation from the repository root passed Jest's `--runInBand` option to Vitest and failed before tests ran; rerunning the applicable commands from `backend/` passed.
-- Updated the authorization and production-readiness descriptions to match scoped student assignments. Save the verified compatibility changes as one local commit. Preserve unrelated untracked `backend/dump.rdb` and `tatus --short`; do not include either in that commit.
+- Updated the authorization and production-readiness descriptions to match scoped student assignments. The verified compatibility changes were saved in commit `a9eb2cb2acdb04dc9a1041558e83ea55a1b7afd5`; the unrelated untracked `backend/dump.rdb` and `tatus --short` were excluded.
 
 ### Remaining commit and release gates
 
 | Gate | Required before proceeding |
 |---|---|
-| Compatibility change commit | Commit only the intended authorization, tests, configuration test, and checkpoint/readiness documentation. Keep `backend/dump.rdb` and `tatus --short` out of the index. Do not push this local checkpoint. |
+| Compatibility change commit | **Complete:** the intended compatibility changes are in commit `a9eb2cb2acdb04dc9a1041558e83ea55a1b7afd5`, and the development branch was pushed and verified at that SHA. The untracked `backend/dump.rdb` and `tatus --short` are not part of the commit. |
 | Institutional/schema approval | Record the existing domain decisions; resolve placement interval overlap, code reuse and catalog lifecycle, academic audit requirements, section/enrollment/teacher-assignment boundaries, and missing assessment/grade workflows. The current schema remains provisional and is not a complete academic management schema. |
 | Target database preflight | No production schema, migration history, extensions, grants, existing data compatibility, backup/restore, or lock behavior was inspected. Require owner/DBA review and a production-like isolated rehearsal before any target change. Do not contact Neon or run a production migration as part of this checkpoint. |
 | Release/deployment approval | Render settings, auto-deploy behavior, deployment health/rollback configuration, and production environment values were not inspected. Verify them only through an explicitly approved non-production process; preserve both academic flags as off until schema, data, authorization, and release approvals are complete. |
 | User-facing acceptance | Real browser/device/session UX, production-scale search/pagination plans, operational monitoring, and post-deploy verification remain untested. The local Nest health check is not deployment acceptance. |
 
-No Neon/Render access, production migration, flag enablement, push, merge, or deployment occurred. Batch 3 was not started.
+No Neon/Render access, production migration, flag enablement, merge, or deployment occurred. The development-branch push was completed and verified separately; no push occurred during the continuation below. Batch 3 was not started.
+
+## Continuation checkpoint — 2026-11-02
+
+- Inspected the current worktree and compatibility source. `HEAD` and `origin/backup/naba-mvp-20261030` both resolve to `a9eb2cb2acdb04dc9a1041558e83ea55a1b7afd5`; there is no tracked source diff. The only untracked files remain `backend/dump.rdb` and `tatus --short`.
+- Source review confirms student self-reads require an active verified principal, exact owner match, and active student role assignment; both academic catalog services check the disabled-by-default backend flag before repository query construction. Startup validation transforms and rejects non-boolean flag values. Previously successful tests were not repeated.
+- The compatibility commit is already complete; this continuation only corrects checkpoint documentation. Production remains **NO-GO** pending institutional/schema and authorization approvals, target database/backup/restore/lock rehearsal, deployment and rollback/environment verification, real user-facing acceptance, and production-scale query/monitoring validation described above. No production service was accessed, no flag was enabled, and Batch 3 was not started.
 
 ## MVP Batch 2 — Admin and Teacher Functional Foundation
 
