@@ -9,14 +9,17 @@ import { AcademicCatalogController } from './presentation/controllers/academic-c
 import { StudentAcademicProfileController } from './student-academic-profile.controller';
 import { TeachingCatalogService } from './application/teaching-catalog.service';
 import { TeachingCatalogController } from './presentation/controllers/teaching-catalog.controller';
+import { ACADEMIC_OPERATIONS_ENTITIES } from './infrastructure/persistence/academic-operations.entity';
+import { AcademicOperationsService } from './application/academic-operations.service';
+import { AcademicOperationsController } from './presentation/controllers/academic-operations.controller';
 
 @Module({
   imports: [
     ConfigModule,
     IdentityModule,
-    TypeOrmModule.forFeature([...ACADEMIC_ENTITIES, ...IDENTITY_ENTITIES]),
+    TypeOrmModule.forFeature([...ACADEMIC_ENTITIES, ...ACADEMIC_OPERATIONS_ENTITIES, ...IDENTITY_ENTITIES]),
   ],
-  controllers: [AcademicCatalogController, StudentAcademicProfileController, TeachingCatalogController],
-  providers: [AcademicCatalogService, AcademicAuthorizationService, TeachingCatalogService],
+  controllers: [AcademicCatalogController, StudentAcademicProfileController, TeachingCatalogController, AcademicOperationsController],
+  providers: [AcademicCatalogService, AcademicAuthorizationService, TeachingCatalogService, AcademicOperationsService],
 })
 export class AcademicModule {}

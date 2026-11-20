@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Layers, Search, Filter, Users, BookOpen, Clock, Calendar, ArrowRight, ArrowLeft } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { AlertCircle, LoaderCircle, RefreshCw } from 'lucide-react';
 import { PortalPage } from '../../components/scaffold/PortalPage';
-import { Locale, useTranslation } from '../../i18n/dictionaries';
-import { useToast } from '../../components/ui/toast';
+import type { AcademicSection, AcademicSectionStudent } from '../../contracts/academicOperations';
+import { useTranslation } from '../../i18n/dictionaries';
+import type { Locale } from '../../i18n/dictionaries';
+import { ApiError } from '../../services/apiClient';
+import { academicOperationsClient } from '../../services/academicOperationsClient';
 
 interface InstructorSectionsPageProps {
   locale: Locale;
@@ -11,65 +13,123 @@ interface InstructorSectionsPageProps {
 
 export const InstructorSectionsPage: React.FC<InstructorSectionsPageProps> = ({ locale }) => {
   const { isAr } = useTranslation();
-  const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [sections, setSections] = useState<AcademicSection[]>([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [students, setStudents] = useState<AcademicSectionStudent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [rosterLoading, setRosterLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [rosterError, setRosterError] = useState('');
+  const [retry, setRetry] = useState(0);
+  const text = (en: string, ar: string) => isAr ? ar : en;
 
-  // Honest data-driven container: empty until real sections exist
-  const sections: any[] = [];
+  const message = (cause: unknown) =>
+    cause instanceof ApiError && cause.status === 403
+      ? text('Access denied. Only currently assigned sections are visible.', 'تم رفض الوصول. تظهر الشعب المسندة إليك فقط.')
+      : cause instanceof ApiError && cause.status === 503
+        ? text('Academic operations are disabled in this environment.', 'العمليات الأكاديمية غير مفعّلة في هذه البيئة.')
+        : text('Could not load academic data. Retry the request.', 'تعذر تحميل البيانات الأكاديمية. أعد المحاولة.');
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError('');
+    academicOperationsClient.listMySections({ page: 1, pageSize: 100 }, controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted) setSections(result.data);
+      })
+      .catch((cause: unknown) => {
+        if (!controller.signal.aborted) {
+          setSections([]);
+          setError(message(cause));
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [retry]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setStudents([]);
+      setRosterError('');
+      return;
+    }
+    const controller = new AbortController();
+    setRosterLoading(true);
+    setRosterError('');
+    academicOperationsClient.listStudents(selectedId, { page: 1, pageSize: 100 }, controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted) setStudents(result.data);
+      })
+      .catch((cause: unknown) => {
+        if (!controller.signal.aborted) {
+          setStudents([]);
+          setRosterError(message(cause));
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setRosterLoading(false);
+      });
+    return () => controller.abort();
+  }, [selectedId, retry]);
 
   return (
     <PortalPage
-      title={isAr ? 'الشُعب الدراسية والمجموعات' : 'Course Sections & Groups'}
-      subtitle={
-        isAr
-          ? 'إدارة الشعب الدراسية المكلفة، مواعيد المحاضرات الأسبوعية، وقاعات البث'
-          : 'Manage assigned course sections, weekly meeting schedules, and virtual classrooms'
-      }
+      title={text('My assigned sections', 'الشعب المسندة إليّ')}
+      subtitle={text('Only active assignments and the enrolled students for those sections are shown.', 'تظهر التعيينات النشطة والطلاب المسجلون في تلك الشعب فقط.')}
       breadcrumbs={[
-        { label: isAr ? 'بوابة المحاضر' : 'Faculty Portal', path: `/${locale}/instructor/dashboard` },
-        { label: isAr ? 'الشُعب الدراسية' : 'Sections' },
+        { label: text('Instructor Portal', 'بوابة المحاضر'), path: `/${locale}/instructor/dashboard` },
+        { label: text('My sections', 'شعبي') },
       ]}
       locale={locale}
     >
-      <div className="space-y-4">
-        {/* Search */}
-        <div className="bg-white rounded-2xl border border-[#DCE3EB] p-4 shadow-xs">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute top-1/2 -translate-y-1/2 start-3 text-[#607086]" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={isAr ? 'بحث برمز الشعبة أو اسم المقرر...' : 'Search section code or course name...'}
-              className="w-full bg-[#EFF3F8] border border-[#DCE3EB] rounded-lg ps-9 pe-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
-            />
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <section className="rounded-2xl border border-[#DCE3EB] bg-white p-4 shadow-xs">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-[#102033]">{text('Assigned sections', 'الشعب المكلف بها')}</h2>
+            <button type="button" onClick={() => setRetry((value) => value + 1)} aria-label={text('Retry', 'إعادة المحاولة')} className="text-[#607086]"><RefreshCw size={17} /></button>
           </div>
-        </div>
-
-        {/* Sections Container */}
-        {sections.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" />
-        ) : (
-          <div className="bg-white rounded-2xl border border-[#DCE3EB] p-12 text-center shadow-xs">
-            <div className="w-16 h-16 rounded-2xl bg-[#EFF3F8] text-[#082B50] flex items-center justify-center mx-auto mb-4 border border-[#DCE3EB]">
-              <Layers size={28} />
+          {loading ? (
+            <div role="status" className="flex items-center gap-2 py-8 text-sm text-[#607086]"><LoaderCircle className="animate-spin" size={18} />{text('Loading…', 'جارٍ التحميل…')}</div>
+          ) : error ? (
+            <p role="alert" className="flex items-center gap-2 py-6 text-sm text-red-700"><AlertCircle size={17} />{error}</p>
+          ) : sections.length === 0 ? (
+            <p className="py-8 text-center text-sm text-[#607086]">{text('No active section assignments.', 'لا توجد تعيينات شعب نشطة.')}</p>
+          ) : (
+            <div className="space-y-2">
+              {sections.map((section) => (
+                <button key={section.id} type="button" onClick={() => setSelectedId(section.id)} className={`w-full rounded-xl border p-3 text-start ${section.id === selectedId ? 'border-[#082B50] bg-[#EFF3F8]' : 'border-[#DCE3EB]'}`}>
+                  <span className="block text-sm font-bold text-[#102033]">{section.code} · {isAr ? section.course.nameAr : section.course.nameEn}</span>
+                  <span className="text-xs text-[#607086]">{section.term.code} · {section.activeEnrollmentCount ?? 0}/{section.capacity} · {section.status}</span>
+                </button>
+              ))}
             </div>
-            <h3 className="text-base font-bold text-[#102033] mb-1">
-              {isAr ? 'لا توجد شُعب دراسية مكلفة حالياً' : 'No sections currently assigned.'}
-            </h3>
-            <p className="text-xs text-[#607086] max-w-md mx-auto leading-relaxed mb-6">
-              {isAr
-                ? 'ستظهر هنا كافة الشُعب وقاعات المحاضرات المعتمدة فور صدور جدول التدريس الفصلي من القسم الأكاديمي.'
-                : 'Assigned sections and meeting schedules will appear here once finalized by the academic department.'}
-            </p>
-            <Link
-              to={`/${locale}/instructor/dashboard`}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#EFF3F8] border border-[#DCE3EB] text-[#082B50] rounded-lg text-xs font-bold transition-colors"
-            >
-              <span>{isAr ? 'العودة للوحة التحكم' : 'Return to Dashboard'}</span>
-            </Link>
-          </div>
-        )}
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-[#DCE3EB] bg-white p-4 shadow-xs">
+          <h2 className="mb-3 text-sm font-bold text-[#102033]">{text('Enrolled students', 'الطلاب المسجلون')}</h2>
+          {!selectedId ? (
+            <p className="py-8 text-center text-sm text-[#607086]">{text('Select one of your assigned sections.', 'اختر شعبة مسندة إليك.')}</p>
+          ) : rosterLoading ? (
+            <div role="status" className="flex items-center gap-2 py-8 text-sm text-[#607086]"><LoaderCircle className="animate-spin" size={18} />{text('Loading roster…', 'جارٍ تحميل القائمة…')}</div>
+          ) : rosterError ? (
+            <p role="alert" className="flex items-center gap-2 py-6 text-sm text-red-700"><AlertCircle size={17} />{rosterError}</p>
+          ) : students.length === 0 ? (
+            <p className="py-8 text-center text-sm text-[#607086]">{text('No active enrollments in this section.', 'لا توجد تسجيلات نشطة في هذه الشعبة.')}</p>
+          ) : (
+            <ul className="divide-y divide-[#DCE3EB]">
+              {students.map((student) => (
+                <li key={student.enrollmentId} className="flex items-center justify-between gap-3 py-3 text-sm">
+                  <span className="font-semibold text-[#102033]">{isAr ? student.nameAr : student.nameEn}</span>
+                  <span className="text-xs text-[#607086]">{new Date(student.enrolledAt).toLocaleDateString(isAr ? 'ar' : 'en')}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </PortalPage>
   );

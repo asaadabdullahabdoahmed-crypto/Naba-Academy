@@ -1,6 +1,7 @@
 import { DataSource, QueryRunner } from 'typeorm';
 import { CreateAcademicFoundation1793299914088 } from './1793299914088-CreateAcademicFoundation';
 import { AddUniversityCatalog1793362429913 } from './1793362429913-AddUniversityCatalog';
+import { CreateAcademicOperations1793618000000 } from './1793618000000-CreateAcademicOperations';
 
 describe('academic migration rollback safety', () => {
   const createQueryRunner = (initiallyActive = false) => {
@@ -98,5 +99,30 @@ describe('academic migration rollback safety', () => {
     expect(startTransaction).not.toHaveBeenCalled();
     expect(commitTransaction).not.toHaveBeenCalled();
     expect(rollbackTransaction).not.toHaveBeenCalled();
+  });
+
+  it('locks operational history child-first and rolls back instead of dropping populated tables', async () => {
+    const { queryRunner, query, startTransaction, rollbackTransaction } = createQueryRunner();
+    query.mockImplementation(async (statement: string) => {
+      if (statement.includes('FROM "academic_student_enrollments"')) {
+        return [{ has_data: true }];
+      }
+      return [{ has_data: false }];
+    });
+
+    await expect(
+      new CreateAcademicOperations1793618000000().down(queryRunner),
+    ).rejects.toThrow(/academic operations history exists/);
+
+    const statements = query.mock.calls.map(([statement]) => statement);
+    expect(startTransaction).toHaveBeenCalledTimes(1);
+    expect(statements.slice(0, 4)).toEqual([
+      'LOCK TABLE "academic_operation_audit_events" IN ACCESS EXCLUSIVE MODE',
+      'LOCK TABLE "academic_student_enrollments" IN ACCESS EXCLUSIVE MODE',
+      'LOCK TABLE "academic_teacher_section_assignments" IN ACCESS EXCLUSIVE MODE',
+      'LOCK TABLE "academic_sections" IN ACCESS EXCLUSIVE MODE',
+    ]);
+    expect(statements.some((statement) => statement.startsWith('DROP TABLE'))).toBe(false);
+    expect(rollbackTransaction).toHaveBeenCalledTimes(1);
   });
 });

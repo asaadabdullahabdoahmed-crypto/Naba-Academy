@@ -1,10 +1,36 @@
 # Academic Management Phase Checkpoint
 
-**Latest checkpoint date:** 2026-10-31 (Asia/Aden)
-**Source baseline:** `backup/naba-mvp-20261030` at `55671136c894786dd000c29068ffb85560e77016`
-**Acceptance status: INCOMPLETE.** Batch 2 now adds disabled, read-only Admin/Teacher course, term, and offering reference APIs/UI. Full teaching assignments, private academic workflows and management writes remain unavailable. See the current Batch 2 entry below; dated October 30 entries are historical snapshots.
+**Latest checkpoint date:** 2026-11-04 (UTC)
+**Source baseline:** `backup/naba-mvp-20261030` at `e4f066871cfb8149ddec63a47a40c068aa3f4b5d`
+**Acceptance status: DEVELOPMENT MVP IMPLEMENTED; PRODUCTION NOT READY.** Batch 3 includes additive section, assignment, enrollment, audit, guarded API, and role-specific UI implementation. Its isolated PostgreSQL integration test passed in the 2026-11-02 implementation session; focused backend/frontend checks were rerun on 2026-11-04. The new server-side operations flag remains false by default. No production service, migration, or deployment was accessed. See `MVP_BATCH_3_REPORT.md`; earlier dated entries are historical snapshots.
 
-**Previous checkpoint summary:** The provisional university → college → department → program read hierarchy, student current-placement display, admin read-only catalog browser, and isolated verification are implemented. Full management writes, complete placement history/audit, teacher assignment scope, and unresolved institutional policies are not implemented. Target schema approval and rollout remain blocked. No Neon or shared/live database operation was performed.
+**Previous checkpoint summary:** The provisional university → college → department → program catalog, student placement reads, and earlier read-only APIs remain. Batch 3 adds the approved provisional operations workflow without changing production activation. Its migration and policy choices require institutional/schema review before release; target rollout remains blocked. No Neon or shared/live database operation was performed.
+
+## Batch 3 recovery and verification — 2026-11-04
+
+- Reconfirmed branch `backup/naba-mvp-20261030`, `HEAD` `e4f066871cfb8149ddec63a47a40c068aa3f4b5d`, and the pre-existing 20 modified / 15 untracked worktree entries. Preserved all existing changes and protected `backend/dump.rdb` (Redis RDB) and `tatus --short` (saved diff text); neither was changed, staged, or deleted.
+- Reviewed the operations migration/entities, service/controller/DTOs, scoped authorization, API clients, student/instructor/admin pages and route wiring, and approval/readiness documents. Existing institutional decisions remain unresolved; no new policy or hierarchy was inferred.
+- Fixed self-service cancellation with an optional body so the current client’s bodyless `DELETE` request no longer dereferences `undefined`. Added an HTTP controller regression test. Surfaced admin section creation errors when no section is selected and added a component regression test; included admin tests in Vitest discovery.
+- Fresh targeted checks: backend **5 suites / 34 tests passed**; frontend **3 files / 5 tests passed**; frontend TypeScript check passed; backend TypeScript check passed with build info redirected to `/tmp`; `git diff --check` passed.
+- `npm --prefix backend run lint` could not write the existing repository-local `backend/dist/tsconfig.tsbuildinfo` due file permissions; the equivalent `tsc --noEmit` passed with a `/tmp` build-info path. No full test suite/build or PostgreSQL integration test was rerun in this continuation. Results dated 2026-11-02 remain historical, not current-turn evidence.
+- The new operations migration remains **provisional and not production-ready**. Its earlier isolated PostgreSQL integration result is recorded in the Batch 3 report, but fresh database verification remains pending; no database URL was used in this continuation.
+- No production/shared database, Neon, Render, migration, feature activation, commit, push, merge, or deployment was accessed or performed. All changes remain uncommitted on the original branch. See `MVP_BATCH_3_REPORT.md` for commands, evidence, current blockers, and file inventory.
+
+## Batch 3 — Academic Operations MVP implementation — 2026-11-02
+
+- Implemented the academic sections, teacher-section assignments, student enrollment/cancellation, audit history, scoped APIs, and admin/teacher/student interfaces described in `MVP_BATCH_3_REPORT.md`.
+- Added migration `1793618000000-CreateAcademicOperations.ts`; only additive tables/indexes/constraints are created. Rollback refuses to drop nonempty operational history. It was applied only inside the empty, loopback-only disposable PostgreSQL test database and the integration fixture rolled it back.
+- All API operations, including reads, are behind `ACADEMIC_OPERATIONS_ENABLED`, default false. Existing academic catalog flags remain unchanged. No roles or permissions are granted by the migration.
+- Authorization checks require exact department-scoped management grants, currently assigned instructor scope plus active section assignment, or the authenticated student's active role, placement and own identity. Client-supplied department IDs are filters, not authorization.
+- Enrollment and cancellation use transactions and lock the course offering and section in consistent order; PostgreSQL integration exercised one winner for the final seat, duplicate/same-offering rules, cancellation and re-enrollment, assignment revocation, scope isolation and closed windows. Enrollment history is retained.
+- Verification: 14 backend academic/config regression suites / 96 tests passed, plus the academic operations integration suite / 1 test against disposable PostgreSQL 16; the separate legacy migration integration suite was not run. All 8 frontend test files / 38 tests passed; backend type-check and TypeScript compile to `/tmp`, frontend type-check/production build, and `git diff --check` passed. The frontend build retains the >500 kB chunk advisory. Repository-local `dist` directories are root-owned, so generated output was kept outside the worktree. Backend tests ran under Node 24 although manifests declare Node 22.
+- The UI currently requests the first 100 records and does not expose page navigation; admin offering/teacher/student selectors rely on entered IDs. These remain usability limitations. Prerequisites, credit limits, timetable conflicts, financial policy, waitlists and cancellation reasons beyond audit metadata are not implemented.
+- No production database, Neon, Render, deployment, commit, push, merge, or feature activation occurred. The disposable container was removed after testing; unrelated `backend/dump.rdb` and `tatus --short` remain untouched.
+
+## Batch 3 discovery — historical snapshot, superseded — 2026-11-02
+
+- Verified repository identity, expected starting commit, branch, history, and tracked/untracked state before work. Preserved the pre-existing untracked `backend/dump.rdb` and `tatus --short`.
+- This discovery-only status was true before the approved Batch 3 implementation continued; it is superseded by the implementation checkpoint above.
 
 ## Batch 2 review and safe local checkpoint — 2026-10-31
 

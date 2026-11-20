@@ -1,6 +1,6 @@
 # Academic Authorization Foundation
 
-**Status:** Provisional development foundation. These rules are not institutional production approval. No academic write endpoint or teacher/administrator workflow is enabled by this document.
+**Status:** Provisional authorization foundation plus user-approved, default-disabled Batch 3 development workflows. The added code is not institutional production approval; no production flag, role grant, migration, or deployment was activated.
 
 ## Trust boundary and enforcement
 
@@ -12,9 +12,9 @@
 
 ## Current capability and deliberate denials
 
-- Student self-reads are the only private academic operations currently exposed. They have session and student-role guards, no-store responses, server-derived owner IDs, and service-level owner/active-role checks.
+- Existing student self-reads retain session and student-role guards, no-store responses, server-derived owner IDs, and service-level owner/active-role checks. Batch 3 adds private section/roster/enrollment operations behind `ACADEMIC_OPERATIONS_ENABLED=false` by default.
 - Catalog reads remain shared, read-only, session/role gated and feature-disabled by default; they expose no private student records and have no mutation endpoints.
-- There are no academic management-write endpoints, authoritative department-admin assignment workflow, section entity, teacher-to-section assignment, roster/enrollment, or student-to-section relation. Do not treat `course_offering` as a section or implement teacher roster access from it.
+- The Batch 3 implementation adds sections, teacher-to-section assignments, roster/enrollment relations, and management/self-service endpoints. A `course_offering` remains distinct from a section and does not establish teacher ownership.
 - The identity schema has `department`, `program`, and `course_offering` assignment scopes, but no `section` scope. Role assignments have assignment and revocation timestamps, but no explicit expiration timestamp or independent active flag. The implementation uses non-revoked and not-future-dated assignments; expiration policy remains a schema/product decision.
 - `permissions` and `role_permissions` are modeled, but production academic permission codes and grants have not been approved/seeded. The reusable policy denies if no exact grant exists. No role or permission is seeded or implicitly privileged here.
 
@@ -22,8 +22,19 @@
 
 The policy unit tests cover inactive/anonymous identities, self-ownership, missing assignments and permissions, future/revoked assignment query constraints, global-admin-without-local-scope denial, cross-department and cross-offering scope mismatch, inactive/missing scopes, ambiguity, and valid explicitly scoped administrator access. Teachers with course-offering assignments are still denied because section assignments do not exist. Existing RolesGuard tests cover missing identity/role; SessionAuthGuard tests cover anonymous rejection and attaching only the server-validated identity. Student HTTP tests attempt to spoof another user through a query parameter and header and verify the backend still uses the authenticated session user.
 
-These are repository/mock-based tests, not proof of database transaction isolation or production permission seeding. No successful teacher or department administrator HTTP workflow is claimed. Add integration tests only after approved permissions and real section/assignment entities exist.
+These earlier policy tests are repository/mock-based and do not prove production permission seeding. Batch 3 adds an isolated PostgreSQL integration test for exact section ownership, department scope, role revocation, capacity locking, history, and enrollment windows. No production HTTP/browser session or permission-provisioning process is claimed.
 
 ## Production blockers and approval boundary
 
-Before any management feature is enabled, approve permission codes/grants, which roles may manage each resource, scope inheritance (if any), assignment lifecycle/expiry/revocation, and parent-scope semantics. Implement authoritative section and teacher assignments plus roster/enrollment relationships before teacher access. Add audited assignment administration and integration tests using isolated PostgreSQL. Do not add a global-admin bypass. Production feature flags remain disabled pending schema and owner approval.
+Before any management feature is enabled in a target environment, approve permission codes/grants, which roles may manage each resource, scope inheritance (if any), assignment lifecycle/expiry/revocation, and parent-scope semantics. The development implementation does not add a global-admin bypass. Production feature flags remain disabled pending schema and owner approval.
+
+## Batch 3 operations authorization — isolated development
+
+- **Admin:** route role guards admit `system_admin` and `department_head`; service checks additionally require the exact active department assignment and the corresponding persisted permission (`academic.sections.manage`, `academic.teacher_assignments.manage`, or `academic.enrollments.manage`). No global-role bypass exists. A client-supplied department ID only filters a query; the offering's department is loaded and authorized server-side.
+- **Teacher:** reads require an active verified principal, active `instructor` assignment and `academic.sections.read` grant for the department, plus a non-revoked assignment to the requested section. Roster queries return active enrollments only.
+- **Student:** session-derived identity only; active verified user, active student role and current active placement in the section department are required for writes. Enrollment history and cancellation are owner-checked against the authenticated user; route inputs cannot select another student for self-service.
+- The migration seeds no grants. Administrators must not be assumed authorized until valid scoped grants exist. The controller's coarse role decorator is not a substitute for service-level authorization.
+- All operations controller routes call the service-side feature gate; the server flag `ACADEMIC_OPERATIONS_ENABLED` defaults to false. Flag activation remains outside this development authorization.
+- The isolated integration suite verifies section/department ownership, assignment revocation, student enrollment ownership and concurrent capacity behavior using synthetic users. It is not a production threat model or deployment approval.
+
+Detailed endpoint and verification status is in `MVP_BATCH_3_REPORT.md`.

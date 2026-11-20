@@ -60,3 +60,16 @@ When approved, migration review must verify:
 ## Safe conclusion
 
 Catalog read routes cover universities, colleges, departments, programs, credentials, and the authenticated student's current placement. They use sessions, role guards, validation, stable sorting, search, pagination, and standard response envelopes, but remain disabled by default. Selector lists return active rows; ID lookups can return inactive, non-deleted catalog ancestry with status for historical interpretation. Soft-deleted records are hidden. The admin academic-structure browser and student placement display are integrated but read-only and default-disabled. Do not enable the routes where the schema has not been separately approved and deployed. The legacy own-profile endpoint remains unchanged; no placement history/write API, real catalog rows, guessed links, Neon operations, or live-data test fixtures are authorized.
+
+## Batch 3 operations schema — isolated development only
+
+The user-approved development rules are implemented separately from the earlier catalog migrations in `1793618000000-CreateAcademicOperations.ts`. It adds:
+
+- `academic_sections`, referencing `course_offerings`, with offering-scoped case-insensitive code uniqueness, positive capacity, status/window checks, schedule metadata, and creator/updater FKs.
+- `academic_teacher_section_assignments`, referencing sections, teachers, and actors, with active/revoked lifecycle and a partial unique index for duplicate active assignments.
+- `academic_student_enrollments`, referencing sections, students, and actors, with active/cancelled lifecycle and a partial unique index for duplicate active enrollment.
+- `academic_operation_audit_events`, referencing departments, actors, optional targets and sections, with JSON event details.
+
+The migration was applied and rolled back only in an empty disposable PostgreSQL 16 database bound to loopback. `synchronize` and `dropSchema` remain false. `down` locks the tables and refuses to drop any table containing history. The integration test exercises actual constraints and concurrent last-seat enrollment. This does not constitute a target-schema review or authorize production execution.
+
+The operations feature is guarded by `ACADEMIC_OPERATIONS_ENABLED`, default false, independently of `ACADEMIC_CATALOG_READS_ENABLED`. The migration creates no permission grants, role assignments, or catalog records. See `ACADEMIC_DOMAIN_MODEL.md`, `ACADEMIC_AUTHORIZATION.md`, and `MVP_BATCH_3_REPORT.md` for workflow relationships, scope checks, and exact verification results. Earlier “not included” statements in this review describe the prior catalog foundation and are superseded only for this gated development implementation.

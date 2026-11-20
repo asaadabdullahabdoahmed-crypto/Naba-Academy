@@ -719,6 +719,16 @@ export const CANONICAL_ROUTES: RouteItem[] = [
     iconName: 'Building2',
   },
   {
+    id: 'admin-sections',
+    path: '/admin/sections',
+    area: 'ADMIN',
+    titleAr: 'الشعب والتسجيل',
+    titleEn: 'Sections & Enrollment',
+    categoryAr: 'بوابة الإدارة',
+    categoryEn: 'Admin Portal',
+    iconName: 'Layers',
+  },
+  {
     id: 'admin-programs',
     path: '/admin/programs',
     area: 'ADMIN',

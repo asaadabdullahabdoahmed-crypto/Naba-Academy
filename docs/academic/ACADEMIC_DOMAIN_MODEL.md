@@ -1,16 +1,16 @@
 # Academic Domain Model
 
-**Status: provisional implementation for isolated development; not an institution-approved data model.** The current user request authorizes preparatory code only. It does not authorize live schema execution, data imports, or write APIs.
+**Status: user-approved provisional rules implemented for isolated development; not production policy or release approval.** Development authorization covers code and disposable local tests only; it does not authorize live schema execution, data imports, feature activation, or deployment.
 
 ## Current implementation boundary
 
-- The operational academic API is `GET /api/v1/students/me/academic-profile`. Provisional, feature-gated catalog GET APIs and a student-only current-placement read are also implemented, but are not operational until the approved schema is deployed and the backend flag is explicitly enabled.
+- The legacy `GET /api/v1/students/me/academic-profile` remains unchanged. Catalog reads remain behind their existing default-off flag. Batch 3 operations APIs are implemented but all are blocked unless `ACADEMIC_OPERATIONS_ENABLED=true`; the flag remains false by default.
 - That endpoint is student-only and returns the existing legacy fields: `departmentId`, `departmentAr`, `departmentEn`, `collegeAr`, and `collegeEn`.
 - The values come from the existing identity/user record. `departmentId` is legacy text, not a verified FK to a proposed academic department.
 - Provisional TypeORM migrations describe an optional university → college → department → program catalog, configurable credential levels, dated placements, terms, courses, and course offerings. The migrations have only been exercised on disposable local PostgreSQL.
 - Catalog read routes are implemented behind `ACADEMIC_CATALOG_READS_ENABLED=false` by default. They are not operational in an environment without the approved schema and explicit feature enablement. No catalog records are seeded.
-- The admin academic-structure page is integrated as a read-only catalog browser; the student profile can display a verified current placement. Both remain disabled by default and do not write data.
-- Courses, terms, sections, enrollment, learning, assessment, examination, and grade APIs are not represented by this v1 proposal and must not be inferred to exist.
+- The admin academic-structure page remains a read-only catalog browser. Batch 3 adds section management, teacher assignment, roster and enrollment interfaces; those operations use the separate default-off server flag.
+- The older v1 catalog proposal did not include sections or enrollment. Batch 3 adds the provisional operations entities below; learning, assessment, examination, and grade APIs remain out of scope.
 
 ## Proposed concepts and ownership
 
@@ -94,3 +94,17 @@ The schema/API work remains blocked until the institution/product owner resolves
 8. An approved legacy-to-catalog crosswalk process, if legacy records are ever to be linked.
 
 No institution names, catalog records, placements, or academic results are created or assumed here.
+
+## Batch 3 operations model — provisional development rules
+
+The approved development workflow uses these relationships and lifecycle states; they do not amend or activate the prior catalog feature gate:
+
+- A section belongs to one course offering. It has a case-insensitively unique code within that offering, positive capacity, optional JSON meeting metadata, paired optional enrollment-window boundaries, and `planned`, `open`, or `closed` status. Closing preserves related assignment, enrollment, and audit history.
+- A teacher-section assignment links one user and section, records the assigning actor and time, and moves from `active` to `revoked` with revoker/time metadata. At most one active assignment exists for a teacher and section.
+- A student enrollment links one user and section, records the enrolling actor/time, and moves from `active` to `cancelled` with canceller/time metadata. Cancellation is retained; re-enrollment creates a new row. Only one active enrollment per student/section is allowed.
+- Audit events record section, target user when applicable, actor, department, event type, details, and creation time. The migration uses restrictive FKs for recorded history and has a guarded rollback that refuses to drop nonempty tables.
+- Enrollment eligibility requires an active student role, an active placement in the section department, an open valid offering/section, an open configured window, and available capacity. Missing window bounds mean closed. Concurrent writes serialize on the offering and section rows.
+- A student cannot hold active enrollment in multiple sections of the same offering. No prerequisite, credit-limit, timetable, finance, or waitlist rules are inferred.
+- Teacher roster access requires both active department-scoped instructor permission and an active assignment to the exact section. Department filters from clients never establish scope.
+
+See `MVP_BATCH_3_REPORT.md` for implemented contracts, test evidence, UI limitations, and production blockers.

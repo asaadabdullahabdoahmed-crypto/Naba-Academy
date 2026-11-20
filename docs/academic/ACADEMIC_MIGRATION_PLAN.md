@@ -62,3 +62,13 @@ Until those gates are resolved, no schema component or API should be treated as 
 ## Exact next action
 
 Record institutional answers to the nine approval gates above, beginning with whether the optional university hierarchy is valid. Review both provisional migrations with the database owner, then separately approve any target-environment schema rollout before enabling the catalog feature flag. Do not represent the prepared catalog APIs or selectors as live functionality.
+
+## Batch 3 operations migration — later development continuation
+
+The previous plan predates the user-approved Batch 3 development work. A separate additive migration, `1793618000000-CreateAcademicOperations.ts`, now creates sections, teacher assignments, student enrollments, and audit events. It has been exercised only against an empty, loopback-only disposable PostgreSQL 16 test database. The test applied and rolled back the migration, then verified the database had no remaining `users` or `academic_sections` tables; the disposable container was removed.
+
+The new migration's `down` path obtains exclusive table locks and refuses rollback if any of the four operations tables contains data. Once real history exists, use a reviewed forward migration or approved recovery plan instead of destructive rollback. The database test uses `synchronize=false` and `dropSchema=false`; no production/shared target was contacted.
+
+`ACADEMIC_OPERATIONS_ENABLED` is a new independent server-side flag, default false. It was enabled only in the isolated integration-test configuration. No role/permission grants were seeded and no production flag was enabled. This development work supersedes the earlier prohibition on implementing any write APIs for this approved isolated batch, but does not approve production use, migration, deployment, or activation.
+
+See `MVP_BATCH_3_REPORT.md` for the migration objects, concurrency strategy, exact test results, and remaining release gates.

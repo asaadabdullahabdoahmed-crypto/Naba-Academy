@@ -15,4 +15,17 @@ describe('configuration academic catalog flag', () => {
       }
     }
   });
+
+  it('keeps academic operations disabled unless explicitly enabled', () => {
+    const previousValue = process.env.ACADEMIC_OPERATIONS_ENABLED;
+    delete process.env.ACADEMIC_OPERATIONS_ENABLED;
+    try {
+      expect(configuration().academicOperations.enabled).toBe(false);
+      process.env.ACADEMIC_OPERATIONS_ENABLED = 'true';
+      expect(configuration().academicOperations.enabled).toBe(true);
+    } finally {
+      if (previousValue === undefined) delete process.env.ACADEMIC_OPERATIONS_ENABLED;
+      else process.env.ACADEMIC_OPERATIONS_ENABLED = previousValue;
+    }
+  });
 });

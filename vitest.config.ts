@@ -9,6 +9,7 @@ export default defineConfig({
       'src/components/academic/**/*.test.tsx',
       'src/data/**/*.test.ts',
       'src/services/**/*.test.ts',
+      'src/views/admin/**/*.test.tsx',
       'src/views/student/**/*.test.tsx',
     ],
     clearMocks: true,
