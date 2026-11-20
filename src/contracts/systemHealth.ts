@@ -6,7 +6,7 @@ export interface SystemHealth {
   timestamp: string;
   dependencies: {
     database: 'up' | 'down';
-    redis: 'up' | 'down';
+    redis: DependencyStatus;
     storage: DependencyStatus;
   };
 }
@@ -25,7 +25,9 @@ export function parseSystemHealth(value: unknown): SystemHealth | null {
     typeof response.timestamp !== 'string' ||
     Number.isNaN(Date.parse(response.timestamp)) ||
     (statuses.database !== 'up' && statuses.database !== 'down') ||
-    (statuses.redis !== 'up' && statuses.redis !== 'down') ||
+    (statuses.redis !== 'up' &&
+      statuses.redis !== 'down' &&
+      statuses.redis !== 'unconfigured') ||
     (statuses.storage !== 'up' &&
       statuses.storage !== 'down' &&
       statuses.storage !== 'unconfigured')
@@ -34,7 +36,11 @@ export function parseSystemHealth(value: unknown): SystemHealth | null {
   }
 
   const expectedStatus =
-    statuses.database === 'up' && statuses.redis === 'up' ? 'ok' : 'degraded';
+    statuses.database === 'up' &&
+    statuses.redis !== 'down' &&
+    statuses.storage !== 'down'
+      ? 'ok'
+      : 'degraded';
   if (response.status !== expectedStatus) return null;
 
   return {

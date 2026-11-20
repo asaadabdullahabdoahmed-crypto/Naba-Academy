@@ -9,14 +9,14 @@ export class RedisHealthService {
 
   /**
    * Probes Redis health with a lightweight PING.
-   * Returns 'up' when responsive, 'down' when unreachable, unconfigured, or failing.
+   * Returns 'unconfigured' when no Redis client is configured, and 'down' when a
+   * configured client is unreachable or failing.
    * Never leaks connection strings, passwords, or network topology.
    */
-  async check(): Promise<'up' | 'down'> {
+  async check(): Promise<'up' | 'down' | 'unconfigured'> {
     const client = this.redisService.getClient();
     if (!client) {
-      // Intentionally unconfigured in current environment
-      return 'down';
+      return 'unconfigured';
     }
 
     try {
