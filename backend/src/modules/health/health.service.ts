@@ -5,7 +5,7 @@ import { S3StorageService } from '../../infrastructure/storage/s3-storage.servic
 
 export interface HealthDependencies {
   database: DatabaseHealthStatus;
-  redis: 'up' | 'down';
+  redis: 'up' | 'down' | 'unconfigured';
   storage: 'up' | 'down' | 'unconfigured';
 }
 
@@ -29,7 +29,8 @@ export class HealthService {
     const redisStatus = await this.redisHealthService.check();
     const storageStatus = await this.storageService.checkHealth();
 
-    const isHealthy = dbStatus === 'up' && redisStatus === 'up';
+    const isHealthy =
+      dbStatus === 'up' && redisStatus !== 'down' && storageStatus !== 'down';
 
     const dependencies: HealthDependencies = {
       database: dbStatus,

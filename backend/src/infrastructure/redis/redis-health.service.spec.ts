@@ -2,7 +2,7 @@ import { RedisHealthService } from './redis-health.service';
 import { RedisService } from './redis.service';
 
 describe('RedisHealthService', () => {
-  it('should return "down" when RedisService has no client', async () => {
+  it('should return "unconfigured" when RedisService has no client', async () => {
     const mockRedisService = {
       getClient: jest.fn().mockReturnValue(null),
       ping: jest.fn(),
@@ -10,7 +10,7 @@ describe('RedisHealthService', () => {
 
     const healthService = new RedisHealthService(mockRedisService);
     const result = await healthService.check();
-    expect(result).toBe('down');
+    expect(result).toBe('unconfigured');
   });
 
   it('should return "up" when Redis responds with "PONG"', async () => {

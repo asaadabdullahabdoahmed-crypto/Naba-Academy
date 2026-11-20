@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
+import { describe, expect, it } from 'vitest';
 import { parseSystemHealth } from './systemHealth';
 
 const healthyResponse = {
@@ -8,44 +7,53 @@ const healthyResponse = {
   timestamp: '2026-10-29T17:00:00.000Z',
   dependencies: {
     database: 'up',
-    redis: 'up',
+    redis: 'unconfigured',
     storage: 'unconfigured',
   },
 };
 
-test('accepts the documented health response without adding operational data', () => {
-  assert.deepEqual(parseSystemHealth(healthyResponse), healthyResponse);
-});
+describe('parseSystemHealth', () => {
+  it('accepts the documented response with optional services unconfigured', () => {
+    expect(parseSystemHealth(healthyResponse)).toEqual(healthyResponse);
+  });
 
-test('rejects unknown service and dependency status values', () => {
-  assert.equal(parseSystemHealth({ ...healthyResponse, service: 'other-api' }), null);
-  assert.equal(
-    parseSystemHealth({
+  it('rejects unknown service and dependency status values', () => {
+    expect(parseSystemHealth({ ...healthyResponse, service: 'other-api' })).toBeNull();
+    expect(parseSystemHealth({
       ...healthyResponse,
       dependencies: { ...healthyResponse.dependencies, database: 'unknown' },
-    }),
-    null,
-  );
-});
+    })).toBeNull();
+  });
 
-test('requires degraded status when a core dependency is down', () => {
-  const degradedResponse = {
-    ...healthyResponse,
-    status: 'degraded',
-    dependencies: { ...healthyResponse.dependencies, redis: 'down' },
-  };
-  assert.deepEqual(parseSystemHealth(degradedResponse), degradedResponse);
-  assert.equal(
-    parseSystemHealth({
+  it('requires degraded status when a configured dependency is down', () => {
+    const degradedResponse = {
+      ...healthyResponse,
+      status: 'degraded',
+      dependencies: { ...healthyResponse.dependencies, redis: 'down' },
+    };
+    expect(parseSystemHealth(degradedResponse)).toEqual(degradedResponse);
+    expect(parseSystemHealth({
       ...healthyResponse,
       dependencies: { ...healthyResponse.dependencies, redis: 'down' },
-    }),
-    null,
-  );
-});
+    })).toBeNull();
+  });
 
-test('rejects malformed or incomplete health payloads', () => {
-  assert.equal(parseSystemHealth(null), null);
-  assert.equal(parseSystemHealth({ ...healthyResponse, timestamp: 'not-a-date' }), null);
-  assert.equal(parseSystemHealth({ status: 'ok' }), null);
+  it('requires degraded status when configured storage is down', () => {
+    const degradedResponse = {
+      ...healthyResponse,
+      status: 'degraded',
+      dependencies: { ...healthyResponse.dependencies, storage: 'down' },
+    };
+    expect(parseSystemHealth(degradedResponse)).toEqual(degradedResponse);
+    expect(parseSystemHealth({
+      ...healthyResponse,
+      dependencies: { ...healthyResponse.dependencies, storage: 'down' },
+    })).toBeNull();
+  });
+
+  it('rejects malformed or incomplete health payloads', () => {
+    expect(parseSystemHealth(null)).toBeNull();
+    expect(parseSystemHealth({ ...healthyResponse, timestamp: 'not-a-date' })).toBeNull();
+    expect(parseSystemHealth({ status: 'ok' })).toBeNull();
+  });
 });

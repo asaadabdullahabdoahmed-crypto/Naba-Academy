@@ -53,13 +53,15 @@ describe('HealthController', () => {
     expect(storageService).toBeDefined();
   });
 
-  it('should return valid health status response when db and redis are up', async () => {
+  it('should be healthy when PostgreSQL is up and optional services are unconfigured', async () => {
+    jest.spyOn(redisHealthService, 'check').mockResolvedValueOnce('unconfigured');
     const result = await controller.getHealth();
     expect(result).toBeDefined();
     expect(result.status).toBe('ok');
     expect(result.service).toBe('naba-api');
     expect(result.dependencies.database).toBe('up');
-    expect(result.dependencies.redis).toBe('up');
+    expect(result.dependencies.redis).toBe('unconfigured');
+    expect(result.dependencies.storage).toBe('unconfigured');
     expect(typeof result.timestamp).toBe('string');
     expect(new Date(result.timestamp).getTime()).not.toBeNaN();
   });
@@ -71,11 +73,18 @@ describe('HealthController', () => {
     expect(result.dependencies.database).toBe('down');
   });
 
-  it('should return degraded health status when redis is down', async () => {
+  it('should return degraded health status when configured Redis is down', async () => {
     jest.spyOn(redisHealthService, 'check').mockResolvedValueOnce('down');
     const result = await controller.getHealth();
     expect(result.status).toBe('degraded');
     expect(result.dependencies.redis).toBe('down');
+  });
+
+  it('should return degraded health status when configured storage is down', async () => {
+    jest.spyOn(storageService, 'checkHealth').mockResolvedValueOnce('down');
+    const result = await controller.getHealth();
+    expect(result.status).toBe('degraded');
+    expect(result.dependencies.storage).toBe('down');
   });
 
   it('should include storage status when configured', async () => {
@@ -94,7 +103,7 @@ describe('HealthController', () => {
 
     // Ensure strictly safe string statuses
     expect(['up', 'down']).toContain(result.dependencies.database);
-    expect(['up', 'down']).toContain(result.dependencies.redis);
+    expect(['up', 'down', 'unconfigured']).toContain(result.dependencies.redis);
     expect(['up', 'down', 'unconfigured']).toContain(result.dependencies.storage);
 
     // Strict negative assertion: no passwords, tokens, URLs, hostnames, or driver errors

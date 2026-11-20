@@ -8,6 +8,7 @@ export default defineConfig({
     include: [
       'src/components/academic/**/*.test.tsx',
       'src/data/**/*.test.ts',
+      'src/contracts/**/*.test.ts',
       'src/services/**/*.test.ts',
       'src/views/admin/**/*.test.tsx',
       'src/views/student/**/*.test.tsx',
