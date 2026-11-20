@@ -197,7 +197,8 @@ export const en: Dictionary = {
     },
     instructor: {
       dashboard: 'Dashboard',
-      courses: 'My Courses',
+      courses: 'Course Catalog',
+      terms: 'Academic Terms',
       sections: 'Sections',
       students: 'Students Roster',
       assignments: 'Assignments & Grading',
@@ -249,7 +250,7 @@ export const en: Dictionary = {
       programs: 'Programs & Faculties',
       curricula: 'Study Curricula',
       courses: 'Master Course Catalog',
-      departments: 'Academic Departments',
+      departments: 'Academic Structure',
       admissions: 'Admissions Management',
       finance: 'Central Finance',
       reports: 'Comprehensive Reports',

@@ -1,11 +1,19 @@
 import { Transform, Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class AcademicCatalogQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(1000000)
+  @Max(10000)
   page = 1;
 
   @Type(() => Number)
@@ -19,4 +27,8 @@ export class AcademicCatalogQueryDto {
   @MaxLength(100)
   @IsOptional()
   search?: string;
+
+  @IsUUID('4')
+  @IsOptional()
+  universityId?: string;
 }

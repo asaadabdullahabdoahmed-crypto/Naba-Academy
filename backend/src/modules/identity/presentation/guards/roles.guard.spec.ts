@@ -49,7 +49,11 @@ describe('RolesGuard', () => {
       controller,
     ]);
     expect(roleAssignmentRepository.find).toHaveBeenCalledWith({
-      where: { userId: 'student-1', revokedAt: expect.anything() },
+      where: {
+        userId: 'student-1',
+        revokedAt: expect.anything(),
+        assignedAt: expect.anything(),
+      },
       relations: ['role'],
     });
   });

@@ -23,4 +23,17 @@ describe('AcademicCatalogQueryDto', () => {
 
     expect(validateSync(query).length).toBeGreaterThan(0);
   });
+
+  it('accepts a UUID university filter and rejects malformed filters or excessive offsets', () => {
+    const valid = plainToInstance(AcademicCatalogQueryDto, {
+      universityId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    });
+    const invalid = plainToInstance(AcademicCatalogQueryDto, {
+      universityId: 'not-a-uuid',
+      page: '10001',
+    });
+
+    expect(validateSync(valid)).toHaveLength(0);
+    expect(validateSync(invalid).length).toBeGreaterThan(0);
+  });
 });

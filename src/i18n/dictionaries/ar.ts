@@ -196,7 +196,8 @@ export const ar = {
     },
     instructor: {
       dashboard: 'لوحة التحكم',
-      courses: 'المقررات المكلفة',
+      courses: 'دليل المقررات',
+      terms: 'الفصول الدراسية',
       sections: 'الشعب الدراسية',
       students: 'قوائم الطلاب',
       assignments: 'الواجبات والتصحيح',
@@ -248,7 +249,7 @@ export const ar = {
       programs: 'البرامج والكليات',
       curricula: 'الخطط الدراسية',
       courses: 'دليل المقررات الشامل',
-      departments: 'الأقسام الأكاديمية',
+      departments: 'الهيكل الأكاديمي',
       admissions: 'شؤون القبول والتسجيل',
       finance: 'الإدارة المالية المركزية',
       reports: 'التقارير الإحصائية الشاملة',

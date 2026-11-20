@@ -46,6 +46,10 @@ export interface AcademicCatalogConfig {
   readsEnabled: boolean;
 }
 
+export interface AcademicOperationsConfig {
+  enabled: boolean;
+}
+
 export interface Configuration {
   app: AppConfig;
   database: DatabaseConfig;
@@ -53,6 +57,7 @@ export interface Configuration {
   storage: StorageConfig;
   email: EmailConfig;
   academicCatalog: AcademicCatalogConfig;
+  academicOperations: AcademicOperationsConfig;
 }
 
 export default (): Configuration => {
@@ -130,6 +135,9 @@ export default (): Configuration => {
     },
     academicCatalog: {
       readsEnabled: process.env.ACADEMIC_CATALOG_READS_ENABLED === 'true',
+    },
+    academicOperations: {
+      enabled: process.env.ACADEMIC_OPERATIONS_ENABLED === 'true',
     },
   };
 };

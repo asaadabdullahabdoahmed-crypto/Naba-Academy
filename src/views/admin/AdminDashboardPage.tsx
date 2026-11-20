@@ -42,8 +42,8 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ locale }
     },
     {
       href: `/${locale}/admin/courses`,
-      title: t('admin.adminPortalStatus.academicOperations'),
-      description: t('admin.adminPortalStatus.academicOperationsUnavailable'),
+      title: isAr ? 'دليل المقررات والفصول' : 'Course and term catalogs',
+      description: isAr ? 'استعراض البيانات المرجعية عند توفر الدليل' : 'Browse reference data when catalog access is available',
       icon: BookOpen,
     },
   ];
