@@ -46,7 +46,7 @@ export const AppDataSource = new DataSource({
   synchronize: false,
   dropSchema: false,
   entities: [path.join(__dirname, '../**/*.entity{.ts,.js}')],
-  migrations: [path.join(__dirname, 'migrations/*{.ts,.js}')],
+  migrations: [path.join(__dirname, 'migrations/[0-9]*-*{.ts,.js}')],
   migrationsTableName: 'typeorm_migrations',
   logging: isProduction ? ['error', 'warn'] : ['error', 'warn', 'migration'],
 });
