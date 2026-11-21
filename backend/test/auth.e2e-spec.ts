@@ -609,6 +609,9 @@ describe('Auth Endpoints & Secure Cookie Transport (e2e)', () => {
         .send({
           email: 'attacker@naba.edu.sa',
           password: 'StrongAttackerPassword2026!',
+          nationalId: '1092837465',
+          fullNameAr: 'طالب تجريبي',
+          fullNameEn: 'Test Student',
           roleCode: 'system_admin',
         })
         .expect(400);
@@ -625,6 +628,9 @@ describe('Auth Endpoints & Secure Cookie Transport (e2e)', () => {
         .send({
           email: 'not-an-email',
           password: '',
+          nationalId: '1092837465',
+          fullNameAr: 'طالب تجريبي',
+          fullNameEn: 'Test Student',
         })
         .expect(400);
 
@@ -645,6 +651,9 @@ describe('Auth Endpoints & Secure Cookie Transport (e2e)', () => {
         .send({
           email: 'student@naba.edu.sa',
           password: 'StrongStudentPassword2026!',
+          nationalId: '1092837465',
+          fullNameAr: 'طالب تجريبي',
+          fullNameEn: 'Test Student',
         })
         .expect(202);
 
@@ -659,6 +668,9 @@ describe('Auth Endpoints & Secure Cookie Transport (e2e)', () => {
       expect(mockRegistrationService.register).toHaveBeenCalledWith({
         email: 'student@naba.edu.sa',
         password: 'StrongStudentPassword2026!',
+        nationalId: '1092837465',
+        fullNameAr: 'طالب تجريبي',
+        fullNameEn: 'Test Student',
       });
     });
   });
@@ -919,8 +931,9 @@ describe('Auth Endpoints & Secure Cookie Transport (e2e)', () => {
         .send({
           email: 'escalation@naba.edu.sa',
           password: 'ValidPassword123!',
-          firstNameAr: 'مهاجم',
-          lastNameAr: 'أكاديمي',
+          nationalId: '1092837465',
+          fullNameAr: 'مهاجم أكاديمي',
+          fullNameEn: 'Malicious Academic',
           roleCode: 'super_admin',
         })
         .expect(400);
@@ -965,8 +978,9 @@ describe('Auth Endpoints & Secure Cookie Transport (e2e)', () => {
         .send({
           email: 'crosssite@naba.edu.sa',
           password: 'ValidPassword123!',
-          firstNameAr: 'أحمد',
-          lastNameAr: 'سالم',
+          nationalId: '1092837465',
+          fullNameAr: 'أحمد سالم',
+          fullNameEn: 'Ahmed Salem',
         })
         .expect(403);
 

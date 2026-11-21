@@ -10,9 +10,13 @@ import { TransactionService } from '../src/database/transaction.service';
 import { RedisHealthService } from '../src/infrastructure/redis/redis-health.service';
 import { S3StorageService } from '../src/infrastructure/storage/s3-storage.service';
 import { IdentityModule } from '../src/modules/identity/identity.module';
+import { AcademicModule } from '../src/modules/academic/academic.module';
 
 @Module({})
 class MockIdentityModule {}
+
+@Module({})
+class MockAcademicModule {}
 
 @Global()
 @Module({
@@ -57,6 +61,8 @@ describe('Naba Academy API (e2e)', () => {
       .useModule(MockDatabaseModule)
       .overrideModule(IdentityModule)
       .useModule(MockIdentityModule)
+      .overrideModule(AcademicModule)
+      .useModule(MockAcademicModule)
       .overrideProvider(RedisHealthService)
       .useValue({
         check: jest.fn().mockResolvedValue('up'),
