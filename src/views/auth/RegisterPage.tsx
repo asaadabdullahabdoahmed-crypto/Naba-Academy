@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus, AlertCircle, Loader2, Info } from 'lucide-react';
+import { UserPlus, AlertCircle, Loader2, Info, Eye, EyeOff } from 'lucide-react';
 import { AuthCard } from '../../components/scaffold/AuthCard';
 import { Locale } from '../../i18n/dictionaries';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -38,6 +38,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,7 +130,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
 
   return (
     <AuthCard
-      title={isAr ? 'إنشاء حساب جديد' : 'Create a New Account'}
+      title={isAr ? 'إنشاء حساب جديد' : 'Create an account'}
       subtitle={
         isAr
           ? 'إنشاء حساب مستخدم جديد للوصول إلى منصة أكاديمية نبا'
@@ -138,45 +139,41 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
       locale={locale}
       footerSlot={
         <div className="flex items-center justify-center gap-2">
-          <span className="text-[#607086]">
+          <span className="text-slate-600">
             {isAr ? 'لديك حساب بالفعل؟' : 'Already have an account?'}
           </span>
-          <Link to={`/${locale}/auth/login`} className="font-bold text-[#082B50] hover:underline">
+          <Link to={`/${locale}/auth/login`} className="auth-text-link">
             {isAr ? 'تسجيل الدخول' : 'Sign In'}
           </Link>
         </div>
       }
     >
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3">
-          <AlertCircle size={18} className="text-[#C93C3C] shrink-0 mt-0.5" />
-          <p className="text-xs text-[#C93C3C] leading-relaxed font-medium">
+        <div id="register-error" className="auth-alert mb-5" role="alert" aria-live="assertive">
+          <AlertCircle size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
+          <p className="m-0">
             {error}
           </p>
         </div>
       )}
 
       {statusNotice && (
-        <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${
-          isSuccess
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-            : 'bg-[#082B50]/5 border-[#082B50]/20 text-[#082B50]'
-        }`}>
-          <Info size={18} className="shrink-0 mt-0.5" />
-          <div className="text-xs leading-relaxed font-medium space-y-2">
+        <div className={`auth-notice mb-5 ${isSuccess ? 'auth-notice--success' : ''}`} role="status" aria-live="polite">
+          <Info size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
+          <div className="space-y-2">
             <p>{statusNotice}</p>
             {isSuccess && (
               <div className="pt-2 flex gap-3">
                 <Link
                   to={`/${locale}/auth/verify-email?email=${encodeURIComponent(formData.email)}`}
-                  className="inline-flex items-center gap-1 font-bold text-emerald-900 underline"
+                  className="auth-text-link"
                 >
                   {isAr ? 'صفحة تأكيد البريد الإلكتروني' : 'Verify Email Page'}
                 </Link>
                 <span>•</span>
                 <Link
                   to={`/${locale}/auth/login`}
-                  className="inline-flex items-center gap-1 font-bold text-emerald-900 underline"
+                  className="auth-text-link"
                 >
                   {isAr ? 'تسجيل الدخول' : 'Sign In'}
                 </Link>
@@ -188,99 +185,125 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-[#102033] mb-1.5">
+          <label htmlFor="register-name-ar" className="auth-label">
             {isAr ? 'الاسم باللغة العربية' : 'Full Name (Arabic)'}
           </label>
           <input
+            id="register-name-ar"
             type="text"
+            autoComplete="name"
             required
             value={formData.fullNameAr}
             onChange={(e) => setFormData({ ...formData, fullNameAr: e.target.value })}
             placeholder={isAr ? 'الاسم الثلاثي أو الرباعي' : 'Full Arabic name'}
-            className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
+            aria-describedby={error ? 'register-error' : undefined}
+            className="auth-input"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#102033] mb-1.5">
+          <label htmlFor="register-name-en" className="auth-label">
             {isAr ? 'الاسم باللغة الإنجليزية' : 'Full Name (English)'}
           </label>
           <input
+            id="register-name-en"
             type="text"
+            autoComplete="name"
             required
             value={formData.fullNameEn}
             onChange={(e) => setFormData({ ...formData, fullNameEn: e.target.value })}
-            placeholder="As written in passport / official ID"
-            className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
+            placeholder={isAr ? 'كما هو مدون في جواز السفر أو الهوية الرسمية' : 'As written in passport / official ID'}
+            className="auth-input"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-[#102033] mb-1.5">
+            <label htmlFor="register-national-id" className="auth-label">
               {isAr ? 'الهوية الوطنية / الإقامة' : 'National ID / Iqama'}
             </label>
             <input
+              id="register-national-id"
               type="text"
+              autoComplete="off"
               required
               value={formData.nationalId}
               onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
               placeholder="10XXXXXXXX"
-              className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
+              className="auth-input"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#102033] mb-1.5">
+            <label htmlFor="register-phone" className="auth-label">
               {isAr ? 'رقم الجوال' : 'Phone Number'}
             </label>
             <input
+              id="register-phone"
               type="tel"
+              autoComplete="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="05XXXXXXXX"
-              className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
+              className="auth-input"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#102033] mb-1.5">
+          <label htmlFor="register-email" className="auth-label">
             {isAr ? 'البريد الإلكتروني' : 'Email Address'}
           </label>
           <input
+            id="register-email"
             type="email"
+            autoComplete="email"
             required
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             placeholder="applicant@example.com"
-            className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
+            className="auth-input"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#102033] mb-1.5">
+          <label htmlFor="register-password" className="auth-label">
             {isAr ? 'كلمة المرور' : 'Password'}
           </label>
-          <input
-            type="password"
-            required
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            placeholder="••••••••"
-            className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
-          />
+          <div className="relative">
+            <input
+              id="register-password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              required
+              minLength={12}
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="••••••••••••"
+              aria-describedby={error ? 'register-error' : undefined}
+              className="auth-input auth-input--icon-end"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="auth-password-toggle"
+              aria-label={showPassword ? (isAr ? 'إخفاء كلمة المرور' : 'Hide password') : (isAr ? 'إظهار كلمة المرور' : 'Show password')}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
+            </button>
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full mt-2 py-2.5 bg-[#082B50] hover:bg-[#061E38] text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+          className="auth-submit mt-2"
         >
           {isSubmitting ? (
-            <Loader2 size={15} className="animate-spin text-[#D6A53A]" />
+            <Loader2 size={17} className="animate-spin" aria-hidden="true" />
           ) : (
-            <UserPlus size={15} />
+            <UserPlus size={17} aria-hidden="true" />
           )}
           <span>
             {isSubmitting
@@ -292,7 +315,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ locale }) => {
         <div className="pt-2 text-center">
           <Link
             to={`/${locale}/auth/verify-email`}
-            className="text-xs text-[#174F89] hover:underline font-semibold"
+            className="auth-text-link text-sm"
           >
             {isAr ? 'تأكيد حساب مسجل مسبقاً' : 'Verify an existing account'}
           </Link>

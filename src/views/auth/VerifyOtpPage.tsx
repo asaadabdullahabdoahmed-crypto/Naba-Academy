@@ -128,7 +128,7 @@ export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ locale }) => {
 
   return (
     <AuthCard
-      title={isAr ? 'تأكيد الحساب والبريد الإلكتروني' : 'Account & Email Verification'}
+      title={isAr ? 'تأكيد الحساب والبريد الإلكتروني' : 'Verify your email'}
       subtitle={
         isAr
           ? 'أدخل رمز أو رابط التحقق المرسل إلى بريدك الإلكتروني لتفعيل حسابك'
@@ -138,7 +138,7 @@ export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ locale }) => {
       footerSlot={
         <div className="space-y-2">
           <div>
-            <Link to={`/${locale}/auth/login`} className="font-semibold text-[#607086] hover:text-[#082B50]">
+            <Link to={`/${locale}/auth/login`} className="auth-text-link">
               {isAr ? 'العودة لتسجيل الدخول' : 'Back to Login'}
             </Link>
           </div>
@@ -146,32 +146,28 @@ export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ locale }) => {
       }
     >
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3">
-          <AlertCircle size={18} className="text-[#C93C3C] shrink-0 mt-0.5" />
-          <p className="text-xs text-[#C93C3C] leading-relaxed font-medium">
+        <div id="verify-error" className="auth-alert mb-5" role="alert" aria-live="assertive">
+          <AlertCircle size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
+          <p className="m-0">
             {error}
           </p>
         </div>
       )}
 
       {statusNotice && (
-        <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${
-          isSuccess
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-            : 'bg-[#082B50]/5 border-[#082B50]/20 text-[#082B50]'
-        }`}>
+        <div className={`auth-notice mb-5 ${isSuccess ? 'auth-notice--success' : ''}`} role="status" aria-live="polite">
           {isSuccess ? (
-            <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+            <CheckCircle2 size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
           ) : (
-            <Info size={18} className="shrink-0 mt-0.5" />
+            <Info size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
           )}
-          <div className="text-xs leading-relaxed font-medium space-y-2">
+          <div className="space-y-2">
             <p>{statusNotice}</p>
             {isSuccess && (
               <div className="pt-2">
                 <Link
                   to={`/${locale}/auth/login`}
-                  className="inline-flex items-center gap-1.5 font-bold text-emerald-900 underline"
+                  className="auth-text-link"
                 >
                   <span>{isAr ? 'الانتقال إلى صفحة تسجيل الدخول' : 'Proceed to Sign In'}</span>
                 </Link>
@@ -183,41 +179,49 @@ export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ locale }) => {
 
       <form onSubmit={handleVerify} className="space-y-5">
         <div>
-          <label className="block text-xs font-semibold text-[#102033] mb-1">
+          <label htmlFor="verify-email" className="auth-label">
             {isAr ? 'البريد الإلكتروني' : 'Email Address'}
           </label>
           <input
             type="email"
+            id="verify-email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="user@example.com"
-            className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
+            aria-describedby={error ? 'verify-error' : undefined}
+            className="auth-input"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#102033] mb-1">
-            {isAr ? 'رمز التحقق (Verification Token)' : 'Verification Token'}
+          <label htmlFor="verify-token" className="auth-label">
+            {isAr ? 'رمز التحقق' : 'Verification token'}
           </label>
           <input
             type="text"
+            id="verify-token"
             required
+            autoComplete="one-time-code"
+            dir="ltr"
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            placeholder="e.g. 64-character verification token"
-            className="w-full text-center text-xs tracking-wider font-mono rounded-xl border border-[#DCE3EB] bg-[#F7F9FC] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50] py-2.5 px-3"
+            placeholder={isAr ? 'أدخل الرمز المرسل إلى بريدك الإلكتروني' : 'Paste the verification token from your email'}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'verify-error' : undefined}
+            className="auth-input auth-input--code"
           />
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-2.5 bg-[#082B50] hover:bg-[#061E38] text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+          className="auth-submit"
         >
           {isSubmitting ? (
-            <Loader2 size={16} className="animate-spin text-[#D6A53A]" />
+            <Loader2 size={18} className="animate-spin" aria-hidden="true" />
           ) : (
-            <ShieldCheck size={16} />
+            <ShieldCheck size={18} aria-hidden="true" />
           )}
           <span>
             {isSubmitting
@@ -226,17 +230,17 @@ export const VerifyOtpPage: React.FC<VerifyOtpPageProps> = ({ locale }) => {
           </span>
         </button>
 
-        <div className="pt-2 text-center border-t border-[#DCE3EB]">
+        <div className="pt-4 text-center border-t border-slate-200">
           <button
             type="button"
             disabled={isResending}
             onClick={handleResend}
-            className="inline-flex items-center gap-1.5 text-xs text-[#174F89] hover:underline font-semibold cursor-pointer disabled:opacity-50"
+            className="auth-resend"
           >
             {isResending ? (
-              <Loader2 size={13} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin" aria-hidden="true" />
             ) : (
-              <RotateCw size={13} />
+              <RotateCw size={16} aria-hidden="true" />
             )}
             <span>
               {isResending

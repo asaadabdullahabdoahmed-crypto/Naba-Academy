@@ -31,6 +31,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ locale }) 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,44 +105,40 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ locale }) 
 
   return (
     <AuthCard
-      title={isAr ? 'تعيين كلمة مرور جديدة' : 'Create New Password'}
+      title={isAr ? 'تعيين كلمة مرور جديدة' : 'Create a new password'}
       subtitle={
         isAr
-          ? 'أدخل كلمة مرور قوية تحتوي على 8 خانات على الأقل تشمل أحرفًا وأرقامًا'
-          : 'Enter a strong password with at least 8 characters including letters and digits'
+          ? 'أنشئ كلمة مرور قوية لا تقل عن 12 خانة.'
+          : 'Create a strong password with at least 12 characters.'
       }
       locale={locale}
       footerSlot={
-        <Link to={`/${locale}/auth/login`} className="font-bold text-[#082B50] hover:underline">
+        <Link to={`/${locale}/auth/login`} className="auth-text-link">
           {isAr ? 'العودة لتسجيل الدخول' : 'Back to Login'}
         </Link>
       }
     >
       {error && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
-          <AlertCircle size={16} className="shrink-0" />
+        <div id="reset-error" className="auth-alert mb-5" role="alert" aria-live="assertive">
+          <AlertCircle size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
           <span>{error}</span>
         </div>
       )}
 
       {statusNotice && (
-        <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${
-          isSuccess
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-            : 'bg-[#082B50]/5 border-[#082B50]/20 text-[#082B50]'
-        }`}>
+        <div className={`auth-notice mb-5 ${isSuccess ? 'auth-notice--success' : ''}`} role="status" aria-live="polite">
           {isSuccess ? (
-            <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+            <CheckCircle2 size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
           ) : (
-            <Info size={18} className="text-[#082B50] shrink-0 mt-0.5" />
+            <Info size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
           )}
-          <div className="text-xs leading-relaxed font-medium space-y-2">
+          <div className="space-y-2">
             <p>{statusNotice}</p>
             {isSuccess && (
               <div className="pt-2">
                 <Link
                   to={`/${locale}/auth/login`}
-                  className="inline-flex items-center gap-1.5 font-bold text-emerald-900 underline"
+                  className="auth-text-link"
                 >
                   <span>{isAr ? 'الانتقال إلى صفحة تسجيل الدخول' : 'Proceed to Sign In'}</span>
                 </Link>
@@ -153,67 +150,93 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ locale }) 
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-[#102033] mb-1.5">
-            {isAr ? 'رمز إعادة التعيين (Token)' : 'Reset Token'}
+          <label htmlFor="reset-token" className="auth-label">
+            {isAr ? 'رمز إعادة التعيين' : 'Reset token'}
           </label>
           <input
+            id="reset-token"
             type="text"
             required
+            autoComplete="one-time-code"
+            dir="ltr"
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            placeholder="e.g. 64-character verification token"
-            className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
+            placeholder={isAr ? 'أدخل الرمز المرسل إلى بريدك الإلكتروني' : 'Paste the reset token from your email'}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'reset-error' : undefined}
+            className="auth-input"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#102033] mb-1.5">
+          <label htmlFor="reset-password" className="auth-label">
             {isAr ? 'كلمة المرور الجديدة (12 خانة على الأقل)' : 'New Password (min 12 characters)'}
           </label>
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
+              id="reset-password"
+              autoComplete="new-password"
               required
               minLength={12}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl ps-3 pe-9 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'reset-error' : undefined}
+              className="auth-input auth-input--icon-end"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute top-1/2 -translate-y-1/2 end-3 text-[#607086] hover:text-[#102033]"
+              className="auth-password-toggle"
+              aria-label={showPassword ? (isAr ? 'إخفاء كلمة المرور' : 'Hide password') : (isAr ? 'إظهار كلمة المرور' : 'Show password')}
+              aria-pressed={showPassword}
             >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              {showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
             </button>
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#102033] mb-1.5">
+          <label htmlFor="reset-confirm-password" className="auth-label">
             {isAr ? 'تأكيد كلمة المرور' : 'Confirm Password'}
           </label>
-          <input
-            type="password"
-            required
-            minLength={12}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="••••••••••••"
-            className="w-full bg-[#F7F9FC] border border-[#DCE3EB] rounded-xl px-3 py-2 text-xs text-[#102033] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#082B50]"
-          />
+          <div className="relative">
+            <input
+              id="reset-confirm-password"
+              type={showConfirmPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              required
+              minLength={12}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••••••"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'reset-error' : undefined}
+              className="auth-input auth-input--icon-end"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="auth-password-toggle"
+              aria-label={showConfirmPassword ? (isAr ? 'إخفاء تأكيد كلمة المرور' : 'Hide password confirmation') : (isAr ? 'إظهار تأكيد كلمة المرور' : 'Show password confirmation')}
+              aria-pressed={showConfirmPassword}
+            >
+              {showConfirmPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
+            </button>
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full mt-2 py-2.5 bg-[#082B50] hover:bg-[#061E38] text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+          className="auth-submit mt-2"
         >
           {isSubmitting ? (
-            <Loader2 size={15} className="animate-spin text-[#D6A53A]" />
+            <Loader2 size={17} className="animate-spin" aria-hidden="true" />
           ) : (
-            <KeyRound size={15} />
+            <KeyRound size={17} aria-hidden="true" />
           )}
           <span>
             {isSubmitting

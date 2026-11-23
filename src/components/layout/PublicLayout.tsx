@@ -14,7 +14,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({ locale }) => {
   const [isVerifierOpen, setIsVerifierOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f6f8fb] text-[#17202a] font-sans antialiased">
+    <div className="min-h-screen flex flex-col bg-[#F1F5F9] text-[#1E293B] font-sans antialiased">
       <PublicHeader
         locale={locale}
         onOpenRouteVerifier={() => setIsVerifierOpen(true)}

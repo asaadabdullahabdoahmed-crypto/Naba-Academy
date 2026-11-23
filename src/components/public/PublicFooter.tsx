@@ -14,7 +14,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ locale }) => {
   const { d, isAr } = useTranslation();
 
   return (
-    <footer className="bg-[#061E38] text-white pt-14 pb-10 border-t border-[#082B50]">
+    <footer className="border-t border-[#09294D] bg-[#061C35] pb-10 pt-14 text-white">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-white/10">
           {/* Col 1: About Academy with Official Logo */}

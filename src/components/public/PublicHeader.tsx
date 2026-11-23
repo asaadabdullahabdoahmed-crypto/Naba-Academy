@@ -58,20 +58,13 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({ locale }) => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-[#DCE3EB] shadow-xs">
-      {/* Top Institutional Navy Accent Strip (No unverified phone/email) */}
-      <div className="bg-[#061E38] text-white py-1.5 px-4 md:px-6 text-[11px] border-b border-[#082B50]">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-white/90 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D6A53A]" />
-            <span>
-              {isAr
-                ? 'أكاديمية نبا للتعليم الإلكتروني والتعليم عن بعد'
-                : 'NABA Academy for Digital Higher Education'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-50 bg-white border-b border-[#CBD5E1]">
+      <div className="bg-[#061C35] text-white px-4 text-[11px] md:px-6">
+        <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-3">
+          <span className="truncate font-medium text-white/90">
+            {isAr ? 'أكاديمية نبأ للتعليم الإلكتروني والتعليم عن بعد' : 'NABA Academy digital higher education'}
+          </span>
+          <div className="flex shrink-0 items-center gap-3">
             {/* Portals Quick Selector */}
             <div className="relative">
               <button
@@ -79,7 +72,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({ locale }) => {
                 onClick={() => setIsPortalsMenuOpen(!isPortalsMenuOpen)}
                 className="flex items-center gap-1.5 text-white/90 hover:text-[#D6A53A] transition-colors py-0.5 cursor-pointer"
               >
-                <GraduationCap size={13} className="text-[#D6A53A]" />
+                <GraduationCap size={13} className="text-[#E0F2FE]" />
                 <span className="font-semibold">{isAr ? 'البوابات الأكاديمية' : 'Academic Portals'}</span>
                 <ChevronDown size={12} />
               </button>
@@ -123,7 +116,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({ locale }) => {
       </div>
 
       {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 h-18 md:h-20 flex items-center justify-between gap-4">
+      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-4 md:h-20 md:px-6">
         {/* Right (in RTL): Official Logo */}
         <Link to={`/${locale}`} className="flex items-center gap-3 shrink-0">
           <NabaLogo size="md" variant="dark" showSubtitle={true} />
@@ -153,7 +146,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({ locale }) => {
         <div className="hidden sm:flex items-center gap-3">
           <Link
             to={`/${locale}/auth/login`}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#D6A53A] hover:bg-[#B88725] text-[#061E38] font-bold text-xs shadow-xs transition-colors cursor-pointer"
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#CBD5E1] px-4 text-xs font-bold text-[#09294D] transition-colors hover:bg-[#F8FAFC]"
           >
             <LogIn size={15} />
             <span>{isAr ? 'تسجيل الدخول' : 'Sign In'}</span>

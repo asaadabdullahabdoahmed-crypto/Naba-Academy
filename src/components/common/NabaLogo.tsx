@@ -30,8 +30,8 @@ export const NabaLogo: React.FC<NabaLogoProps> = ({
       <div
         className={`${iconSizes[size]} shrink-0 rounded-xl flex items-center justify-center relative overflow-hidden transition-transform duration-200 group-hover:scale-105 shadow-xs ${
           isLight
-            ? 'bg-[#082B50] text-[#D6A53A] border border-[#D6A53A]/30'
-            : 'bg-[#082B50] text-[#D6A53A] border border-[#061E38]'
+            ? 'bg-[#09294D] text-white border border-white/20'
+            : 'bg-[#09294D] text-white border border-[#061C35]'
         }`}
       >
         <svg
